@@ -1,4 +1,4 @@
-import { Schema, model, Types } from 'mongoose';
+import { Schema, model, models, Types } from 'mongoose';
 
 const ReportSchema = new Schema({
   userId: { type: Types.ObjectId, ref: 'User', required: true },
@@ -8,4 +8,4 @@ const ReportSchema = new Schema({
   status: { type: String, enum: ['pending', 'reviewed', 'resolved'], default: 'pending' }
 });
 
-export default model('Report', ReportSchema);
+export default models.Report || model('Report', ReportSchema);

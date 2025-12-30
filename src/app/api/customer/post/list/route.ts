@@ -117,14 +117,14 @@ export async function GET(req: NextRequest) {
     const { getBlockedAndReportedFilters } = await import('./filterBlockedAndReported');
     const { blockedUserIds, blockedPostIds } = await getBlockedAndReportedFilters(userId);
     if (blockedUserIds.length > 0) {
-      filter.user = filter.user ? filter.user : { $nin: blockedUserIds.map(id => new mongoose.Types.ObjectId(id)) };
+      filter.user = filter.user ? filter.user : { $nin: blockedUserIds.map(id => new mongoose.Types.ObjectId(id.toString())) };
     }
     if (blockedPostIds.length > 0) {
-      filter._id = filter._id ? filter._id : { $nin: blockedPostIds.map(id => new mongoose.Types.ObjectId(id)) };
+      filter._id = filter._id ? filter._id : { $nin: blockedPostIds.map(id => new mongoose.Types.ObjectId(id.toString())) };
     }
     // If targetUserId is provided, fetch posts for that user (profile view)
     if (targetUserId) {
-      filter.user = new mongoose.Types.ObjectId(targetUserId);
+      filter.user = new mongoose.Types.ObjectId(targetUserId.toString());
     } else if (feed) {
       // TODO: Add logic for following users, algorithmic feed, etc.
       // For now, just return all posts (could filter by following in future)
@@ -181,8 +181,8 @@ export async function GET(req: NextRequest) {
 
     // Aggregate comment counts for each post
     const commentCountsArr = await Comment.aggregate([
-      { $match: { post: { $in: postIds }, isDeleted: false } },
-      { $group: { _id: '$post', count: { $sum: 1 } } }
+      { $match: { postId: { $in: postIds }, isDeleted: false } },
+      { $group: { _id: '$postId', count: { $sum: 1 } } }
     ]);
     const commentCounts: Record<string, number> = {};
     commentCountsArr.forEach((c: any) => {
@@ -191,21 +191,25 @@ export async function GET(req: NextRequest) {
 
     // Use like list API for likeCount and userLike for each post
     const likeResults: Record<string, { likeCount: number, userLike: boolean }> = {};
-    for (const postId of postIds) {
-      try {
-        const likeApiUrl = `${req.nextUrl.origin || ''}/api/like/list?targetId=${postId}&targetType=post&userId=${userId}`;
-        const likeRes = await fetch(likeApiUrl);
-        const likeJson = await likeRes.json();
-        likeResults[postId.toString()] = {
-          likeCount: likeJson?.data?.total || 0,
-          userLike: likeJson?.data?.userLike || false
-        };
-      } catch {
-        likeResults[postId.toString()] = { likeCount: 0, userLike: false };
+    // Get like counts for all posts in one query
+    const likeCountsArr = await Like.aggregate([
+      { $match: { targetId: { $in: postIds }, targetType: 'post', isDeleted: false } },
+      { $group: { _id: '$targetId', count: { $sum: 1 } } }
+    ]);
+    likeCountsArr.forEach((l: any) => {
+      likeResults[l._id.toString()] = { likeCount: l.count, userLike: false };
+    });
+
+    // Get userLike for all posts in one query
+    const userLikesArr = await Like.find({ targetId: { $in: postIds }, targetType: 'post', user: userId, isDeleted: false }).select('targetId');
+    userLikesArr.forEach((ul: any) => {
+      const postIdStr = ul.targetId.toString();
+      if (likeResults[postIdStr]) {
+        likeResults[postIdStr].userLike = true;
+      } else {
+        likeResults[postIdStr] = { likeCount: 0, userLike: true };
       }
-    }
-
-
+    });
     // Get followers count for all post users
     const userIds = posts.map((p: any) => p.user?._id).filter(Boolean);
     const followersArr = await Follow.aggregate([

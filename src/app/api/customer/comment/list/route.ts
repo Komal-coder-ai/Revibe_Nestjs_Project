@@ -73,7 +73,7 @@ type UserProfile = {
 };
 
 type CommentDoc = {
-  _id: any;
+  commentId: any;
   postId: any;
   userId: any;
   content: string;
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
     const rawComments = await Comment.find({ postId, isDeleted: false }).sort({ createdAt: 1 }).lean();
     // Map raw comments to CommentDoc and ensure _id is string
     const allComments: CommentDoc[] = rawComments.map((c: any) => ({
-      _id: c._id?.toString?.() ?? String(c._id),
+      commentId: c._id?.toString?.() ?? String(c._id),
       postId: c.postId,
       userId: c.userId,
       content: c.content,
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
       likeCount: 0
     }));
     // Get like counts for all comments
-    const commentIds = allComments.map(c => c._id);
+    const commentIds = allComments.map(c => c.commentId);
     const likeCountsArr = await Like.aggregate([
       { $match: { targetId: { $in: commentIds }, targetType: 'comment', isDeleted: false } },
       { $group: { _id: '$targetId', count: { $sum: 1 } } }
@@ -148,18 +148,18 @@ export async function GET(request: NextRequest) {
       userMap[u._id.toString()] = {
         name: u.name,
         username: u.username,
-        profileImage: Array.isArray(u.profileImage) ? u.profileImage[0] : null
+        profileImage: Array.isArray(u.profileImage) ? (u.profileImage[0] ?? null) : null
       };
     });
     // Attach user info and commentLike to each comment
     allComments.forEach((c) => {
       c.userProfile = userMap[c.userId.toString()] || null;
-      c.likeCount = likeCounts[c._id] || 0;
-      (c as any).commentLike = userLikesMap[c._id] || false;
+      c.likeCount = likeCounts[c.commentId] || 0;
+      (c as any).commentLike = userLikesMap[c.commentId] || false;
     });
     // Build a map of comments by _id
     const commentMap: Record<string, CommentDoc> = {};
-    allComments.forEach((c) => { commentMap[c._id] = c; });
+    allComments.forEach((c) => { commentMap[c.commentId] = c; });
     // Build tree: attach each comment to its parent
     const roots: CommentDoc[] = [];
     allComments.forEach((c) => {

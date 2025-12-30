@@ -109,7 +109,7 @@
  *                   type: object
  */
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB  from '@/lib/db';
+import connectDB from '@/lib/db';
 import Post from '@/models/Post';
 import { createPostSchema } from '../validator/schemas';
 import { extractHashtags } from '@/lib/hashtag';
@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parse = createPostSchema.safeParse(body);
     if (!parse.success) {
-      return NextResponse.json({ data: { status: false, message: 'Validation error', errors: parse.error.issues} }, { status: 400 });
+      return NextResponse.json({ data: { status: false, message: 'Validation error', errors: parse.error.issues } }, { status: 400 });
     }
     const { userId, type, media, text, caption, location, taggedUsers, options, correctOption } = parse.data;
     const hashtags = extractHashtags((text || '') + ' ' + (caption || ''));
