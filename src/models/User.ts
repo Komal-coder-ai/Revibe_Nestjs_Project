@@ -1,0 +1,77 @@
+import mongoose, { Schema } from 'mongoose';
+
+const UserSchema = new Schema(
+  {
+    countryCode: { type: String },
+    mobile: { type: String, index: true },
+    aadhar: { type: String, default: '', index: true },
+    name: { type: String, default: '' },
+    username: { type: String, default: '' },
+    email: { type: String, default: '' },
+    bio: { type: String, default: '' },
+
+    profileImage: {
+      type: [
+        {
+          imageUrl: { type: String, default: '' },
+          thumbUrl: { type: String, trim: true, default: '' },
+          type: { type: String, trim: true, default: '' },
+          width: { type: String, trim: true, default: '' },
+          height: { type: String, trim: true, default: '' },
+          orientation: { type: String, trim: true, default: '' },
+          format: { type: String, trim: true, default: '' },
+        }
+      ],
+      default: [],
+    },
+
+    coverImage: {
+      type: [
+        {
+          imageUrl: { type: String, default: '' },
+          thumbUrl: { type: String, trim: true, default: '' },
+          type: { type: String, trim: true, default: '' },
+          width: { type: String, trim: true, default: '' },
+          height: { type: String, trim: true, default: '' },
+          orientation: { type: String, trim: true, default: '' },
+          format: { type: String, trim: true, default: '' },
+        }
+      ],
+      default: [],
+    },
+
+    isVerified: { type: Boolean, default: false },
+    profileType: { type: String, enum: ['public', 'private'], default: 'public' },
+    otp: { type: String, default: '' },
+    otpExpiresAt: { type: Date, default: null },
+    refreshToken: { type: String, default: '' },
+    expiresAt: { type: Date, default: null },
+    userType: { type: String, enum: ['original', 'demo'], default: 'original' },
+    deviceId: { type: String, default: '' },
+    referralCode: { type: String, default: '' },
+    referredBy: { type: Schema.Types.ObjectId, ref: 'User', default: null }
+  },
+  { timestamps: true }
+);
+
+// Pre-save hook to ensure profileImage is always an array of objects
+// UserSchema.pre('save', function (next) {
+//   if (typeof this.profileImage === 'string') {
+//     this.profileImage = [{
+//       imageUrl: this.profileImage,
+//       thumbUrl: '',
+//       type: '',
+//       width: '',
+//       height: '',
+//       orientation: '',
+//       format: ''
+//     }];
+//   }
+//   if (!Array.isArray(this.profileImage)) {
+//     this.profileImage = [];
+//   }
+//   next();
+// });
+
+const User = (mongoose.models.User as mongoose.Model<any>) || mongoose.model('User', UserSchema);
+export default User;
