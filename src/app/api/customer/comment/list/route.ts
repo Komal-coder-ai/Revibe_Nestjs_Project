@@ -62,7 +62,7 @@ import { z } from 'zod';
 
 import { NextRequest, NextResponse } from 'next/server';
 import Comment from '@/models/Comment';
-import connectDB  from '@/lib/db';
+import connectDB from '@/lib/db';
 import mongoose from 'mongoose';
 import Like from '@/models/Like';
 
