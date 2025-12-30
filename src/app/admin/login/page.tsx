@@ -50,7 +50,7 @@ export default function AdminLogin() {
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Admin Login</h1>
-          <p className="text-gray-600 mt-2">Sign in to access admin dashboard</p>
+          {/* <p className="text-gray-600 mt-2">Sign in to access admin dashboard</p> */}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -60,10 +60,10 @@ export default function AdminLogin() {
             </div>
           )}
 
-          <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded text-sm">
+          {/* <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded text-sm">
             <p className="font-medium">First time login?</p>
             <p className="mt-1">Your account will be created automatically on first login.</p>
-          </div>
+          </div> */}
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -104,11 +104,11 @@ export default function AdminLogin() {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        {/* <div className="mt-6 text-center">
           <a href="/customer/login" className="text-blue-600 hover:text-blue-700 text-sm">
             Login as Customer
           </a>
-        </div>
+        </div> */}
       </div>
     </div>
   );
