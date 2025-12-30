@@ -1,4 +1,4 @@
-import { Schema, model, Types } from 'mongoose';
+import { Schema, model, models, Types } from 'mongoose';
 
 const BlockedUserSchema = new Schema({
   blockerId: { type: Types.ObjectId, ref: 'User', required: true },
@@ -6,4 +6,5 @@ const BlockedUserSchema = new Schema({
   blockedAt: { type: Date, default: Date.now }
 });
 
-export default model('BlockedUser', BlockedUserSchema);
+const BlockedUser = models.BlockedUser || model('BlockedUser', BlockedUserSchema);
+export default BlockedUser;
