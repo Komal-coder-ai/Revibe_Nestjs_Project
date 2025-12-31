@@ -1,0 +1,243 @@
+/* Make input and textarea text color black for better readability */
+.swagger-ui input,
+.swagger-ui textarea {
+    color: #111 !important;
+    background: #fff !important;
+}
+
+/* --- Improved Swagger UI Dark Theme for Better Contrast --- */
+
+/* Main background and section backgrounds */
+.swagger-ui,
+.swagger-ui .topbar,
+.swagger-ui .info {
+    background: #18181b !important;
+    color: #e5e7eb !important;
+}
+
+/* Request/response blocks and opblock sections */
+.swagger-ui .opblock,
+.swagger-ui .opblock-section,
+.swagger-ui .opblock .opblock-section,
+.swagger-ui .opblock .opblock-body,
+.swagger-ui .opblock .execute-wrapper,
+.swagger-ui .opblock .opblock-request-body,
+.swagger-ui .opblock .opblock-request-body pre,
+.swagger-ui .opblock .opblock-section-header,
+.swagger-ui .opblock .parameters-container,
+.swagger-ui .opblock .parameters,
+.swagger-ui .opblock .opblock-form {
+    background: #23232b !important;
+}
+
+/* Code blocks (request/response body) */
+.swagger-ui pre,
+.swagger-ui .microlight {
+    background: #101014 !important;
+    color: #e5e7eb !important;
+    border-radius: 6px !important;
+    border: 1px solid #23232b !important;
+}
+
+/* Buttons */
+.swagger-ui .btn,
+.swagger-ui .execute-wrapper .btn {
+    background: #053114 !important;
+    color: #fff !important;
+    border-radius: 4px !important;
+    border: none !important;
+}
+
+/* Section headers and tags */
+.swagger-ui .opblock-summary,
+.swagger-ui .opblock-tag,
+.swagger-ui .opblock-section-header {
+    background: #20202a !important;
+    color: #60a5fa !important;
+}
+
+/* Response status */
+.swagger-ui .response-col_status {
+    background: #1e293b !important;
+    color: #fbbf24 !important;
+}
+
+/* Info and markdown */
+.swagger-ui .info,
+.swagger-ui .markdown code {
+    background: #18181b !important;
+    color: #fbbf24 !important;
+}
+
+/* Remove box shadows for a cleaner look */
+.swagger-ui .opblock,
+.swagger-ui .topbar {
+    box-shadow: none !important;
+}
+
+/* Make the request block (when Try it out is active) a lighter dark gray */
+.swagger-ui .opblock .opblock-section .opblock-section-header,
+.swagger-ui .opblock .opblock-section,
+.swagger-ui .opblock .opblock-body,
+.swagger-ui .opblock .execute-wrapper,
+.swagger-ui .opblock .opblock-request-body,
+.swagger-ui .opblock .opblock-request-body pre,
+.swagger-ui .opblock .opblock-section-header,
+.swagger-ui .opblock .parameters-container,
+.swagger-ui .opblock .parameters,
+.swagger-ui .opblock .opblock-form {
+    background: #0c0d0f !important;
+}
+
+/* Custom dark theme for Swagger UI */
+.swagger-ui,
+.swagger-ui .topbar,
+.swagger-ui .info,
+.swagger-ui .scheme-container,
+.swagger-ui .opblock,
+.swagger-ui .opblock-tag-section,
+.swagger-ui .opblock-summary,
+.swagger-ui .opblock-section-header,
+.swagger-ui .responses-inner,
+.swagger-ui .response,
+.swagger-ui .response-col_status,
+.swagger-ui .response-col_description,
+.swagger-ui .response-col_links,
+.swagger-ui .response-col_schema,
+.swagger-ui .response-col_headers,
+.swagger-ui .response-col_examples,
+.swagger-ui .response-col_response,
+.swagger-ui .response-col_response .response-col_response,
+.swagger-ui .model,
+.swagger-ui .model-title,
+.swagger-ui .model-box,
+.swagger-ui .model-toggle,
+.swagger-ui .parameter__name,
+.swagger-ui .parameter__type,
+.swagger-ui .parameter__deprecated,
+.swagger-ui .parameter__in,
+.swagger-ui .parameter__description,
+.swagger-ui .parameter__default,
+.swagger-ui .parameter__enum,
+.swagger-ui .parameter__example,
+.swagger-ui .parameter__format,
+.swagger-ui .parameter__pattern,
+.swagger-ui .parameter__minLength,
+.swagger-ui .parameter__maxLength,
+.swagger-ui .parameter__minimum,
+.swagger-ui .parameter__maximum,
+.swagger-ui .parameter__multipleOf,
+.swagger-ui .parameter__exclusiveMinimum,
+.swagger-ui .parameter__exclusiveMaximum,
+.swagger-ui .parameter__minItems,
+.swagger-ui .parameter__maxItems,
+.swagger-ui .parameter__uniqueItems,
+.swagger-ui .parameter__minProperties,
+.swagger-ui .parameter__maxProperties,
+.swagger-ui .parameter__required,
+.swagger-ui .parameter__readOnly,
+.swagger-ui .parameter__writeOnly,
+.swagger-ui .parameter__nullable,
+.swagger-ui .parameter__deprecated,
+.swagger-ui .parameter__xml,
+.swagger-ui .parameter__externalDocs,
+.swagger-ui .parameter__discriminator,
+.swagger-ui .parameter__allOf,
+.swagger-ui .parameter__oneOf,
+.swagger-ui .parameter__anyOf,
+.swagger-ui .parameter__not,
+.swagger-ui .parameter__items,
+.swagger-ui .parameter__properties,
+.swagger-ui .parameter__additionalProperties,
+.swagger-ui .parameter__default,
+.swagger-ui .parameter__enum,
+.swagger-ui .parameter__example,
+.swagger-ui .parameter__format,
+.swagger-ui .parameter__pattern,
+.swagger-ui .parameter__minLength,
+.swagger-ui .parameter__maxLength,
+.swagger-ui .parameter__minimum,
+.swagger-ui .parameter__maximum,
+.swagger-ui .parameter__multipleOf,
+.swagger-ui .parameter__exclusiveMinimum,
+.swagger-ui .parameter__exclusiveMaximum,
+.swagger-ui .parameter__minItems,
+.swagger-ui .parameter__maxItems,
+.swagger-ui .parameter__uniqueItems,
+.swagger-ui .parameter__minProperties,
+.swagger-ui .parameter__maxProperties,
+.swagger-ui .parameter__required,
+.swagger-ui .parameter__readOnly,
+.swagger-ui .parameter__writeOnly,
+.swagger-ui .parameter__nullable,
+.swagger-ui .parameter__deprecated,
+.swagger-ui .parameter__xml,
+.swagger-ui .parameter__externalDocs,
+.swagger-ui .parameter__discriminator,
+.swagger-ui .parameter__allOf,
+.swagger-ui .parameter__oneOf,
+.swagger-ui .parameter__anyOf,
+.swagger-ui .parameter__not,
+.swagger-ui .parameter__items,
+.swagger-ui .parameter__properties,
+.swagger-ui .parameter__additionalProperties {
+    background: #18181b !important;
+    color: #fdfeff !important;
+}
+
+.swagger-ui .topbar {
+    background: #111827 !important;
+}
+
+.swagger-ui .btn {
+    background: #073f19 !important;
+    color: #fff !important;
+}
+
+.swagger-ui .opblock {
+    background: #27272a !important;
+    border-color: #7ffab2 !important;
+}
+
+.swagger-ui .opblock-summary {
+    background: #07090c !important;
+    color: #fbfcff !important;
+}
+
+.swagger-ui .opblock-tag {
+    background: #040507 !important;
+    color: #f7f8f8 !important;
+}
+
+.swagger-ui .response-col_status {
+    background: #18181b !important;
+    color: #fbbf24 !important;
+}
+
+.swagger-ui .response-col_description {
+    color: #f6f6f7 !important;
+}
+
+.swagger-ui .model-title,
+.swagger-ui .model-box {
+    color: #fbbf24 !important;
+}
+
+.swagger-ui .parameter__name {
+    color: #60a5fa !important;
+}
+
+.swagger-ui .parameter__type {
+    color: #fbbf24 !important;
+}
+
+.swagger-ui .info {
+    background: #18181b !important;
+    color: #f7f8fa !important;
+}
+
+.swagger-ui .markdown code,
+.swagger-ui pre {
+    background: #27272a !important;
+    color: #fbbf24 !important;
+}

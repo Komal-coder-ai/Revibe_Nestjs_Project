@@ -107,6 +107,7 @@ export async function GET(req: Request) {
       profileImage: raw.profileImage || '',
       coverImage: raw.coverImage || '',
       isVerified: !!raw.isVerified,
+      userType: raw.userType || '',
       followers,
       followings
     };

@@ -17,6 +17,9 @@
  *               file:
  *                 type: string
  *                 format: binary
+ *               folder:
+ *                 type: string
+ *                 description: "Target folder in Cloudinary (optional, defaults to 'uploads')"
  *     responses:
  *       200:
  *         description: File uploaded successfully
@@ -44,16 +47,18 @@ export async function POST(request: NextRequest) {
     try {
         const formData = await request.formData();
         const file = formData.get('file');
+        const folder = formData.get('folder');
         if (!file || !(file instanceof File)) {
             return NextResponse.json({ success: false, message: 'No file uploaded' }, { status: 400 });
         }
+        const folderName = typeof folder === 'string' && folder.trim() !== '' ? folder.trim() : 'uploads';
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
         const publicId = `image_${Date.now()}`;
         const result = await new Promise((resolve, reject) => {
             cloudinary.uploader.upload_stream(
-                { folder: 'uploads', public_id: publicId },
-                (error: Error | null, result: any) => {
+                { folder: folderName, public_id: publicId },
+                (error: import('cloudinary').UploadApiErrorResponse | undefined, result: import('cloudinary').UploadApiResponse | undefined) => {
                     if (error) return reject(error);
                     resolve(result);
                 }

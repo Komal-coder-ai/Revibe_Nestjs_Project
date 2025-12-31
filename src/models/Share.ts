@@ -1,10 +1,12 @@
-import { Schema, model, Types } from 'mongoose';
+import { Schema, model, models, Types } from 'mongoose';
 
 const ShareSchema = new Schema({
-  userId: { type: Types.ObjectId, ref: 'User', required: true },
-  postId: { type: Types.ObjectId, ref: 'Post', required: true },
+  userId: { type: Types.ObjectId, ref: 'User' },
+  postId: { type: Types.ObjectId, ref: 'Post' },
   sharedAt: { type: Date, default: Date.now },
-  platform: { type: String }
+  type: { type: String, enum: ['share', 'copy']},
+}, {
+  timestamps: true,
 });
 
-export default model('Share', ShareSchema);
+export default models.Share || model('Share', ShareSchema);
