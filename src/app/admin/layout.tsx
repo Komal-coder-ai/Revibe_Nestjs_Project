@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import logo from "../../../src/app/admin/Assest/revibe.png"
+import { ToastProvider } from './ToastProvider';
 import './admin.css';
 
 interface AdminData {
@@ -33,7 +34,7 @@ export default function AdminLayout({
     // Check if admin is logged in
     const adminData = localStorage.getItem('admin');
     if (!adminData) {
-      router.push('/admin/login');
+      router.replace('/admin/login'); // Use replace to avoid adding to history stack
       return;
     }
 
@@ -42,7 +43,7 @@ export default function AdminLayout({
       setAdmin(parsedAdmin);
     } catch (error) {
       console.error('Error parsing admin data:', error);
-      router.push('/admin/login');
+      router.replace('/admin/login');
     }
   }, [pathname, router]);
 
@@ -69,19 +70,11 @@ export default function AdminLayout({
     router.push('/admin/login');
   };
 
-  // If it's the login page, render without layout
-  if (pathname === '/admin/login') {
-    return <>{children}</>;
-  }
-
-  // Show loading while checking auth
-  if (!admin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-gray-600">Loading...</div>
-      </div>
-    );
-  }
+  const handleNavigation = (path: string) => {
+    if (pathname !== path) {
+      router.push(path); // Use client-side navigation
+    }
+  };
 
   const menuItems = [
     {
@@ -102,24 +95,15 @@ export default function AdminLayout({
       ),
       path: '/admin/users',
     },
-    // {
-    //   name: 'Products',
-    //   icon: (
-    //     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    //       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-    //     </svg>
-    //   ),
-    //   path: '/admin/products',
-    // },
-    // {
-    //   name: 'Orders',
-    //   icon: (
-    //     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    //       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-    //     </svg>
-    //   ),
-    //   path: '/admin/orders',
-    // },
+    {
+      name: 'Feed',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      ),
+      path: '/admin/Feed',
+    },
     {
       name: 'Settings',
       icon: (
@@ -134,6 +118,7 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-gray-100">
+      <ToastProvider />
       {/* Header */}
       <header className="bg-white shadow-sm fixed top-0 left-0 right-0 z-30">
         <div className="flex items-center justify-between px-4 py-3">

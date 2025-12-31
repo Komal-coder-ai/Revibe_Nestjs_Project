@@ -209,6 +209,13 @@
   padding: var(--spacing-xl);
 }
 
+/* DataTable Scrolling Fix */
+.rdt_TableWrapper {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+}
+
+
 /* Responsive */
 @media (max-width: 900px) {
   .admin-sidebar {
@@ -226,4 +233,9 @@
   .admin-main--offset {
     margin-left: var(--sidebar-width);
   }
+
+  .rdt_Table {
+    min-width: 800px;
+  }
 }
+

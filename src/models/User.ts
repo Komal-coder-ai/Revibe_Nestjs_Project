@@ -42,6 +42,7 @@ const UserSchema = new Schema(
 
     isVerified: { type: Boolean, default: false },
     profileType: { type: String, enum: ['public', 'private'], default: 'public' },
+    status: { type: Number, enum: [0, 1], default: 1 },
     otp: { type: String, default: '' },
     otpExpiresAt: { type: Date, default: null },
     refreshToken: { type: String, default: '' },
