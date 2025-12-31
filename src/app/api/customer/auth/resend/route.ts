@@ -18,7 +18,7 @@
  *                 example: "+91"
  *               mobile:
  *                 type: string
- *                 example: "9876543210"
+ *                 example: "9039418742"
  *     responses:
  *       200:
  *         description: OTP resent successfully

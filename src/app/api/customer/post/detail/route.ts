@@ -105,19 +105,11 @@ export async function GET(request: NextRequest) {
             const votes = await Vote.find({ post: post._id });
             totalVotes = votes.length;
         }
-        // Fetch comments with commentLike for this post
-        let comments = [];
-        try {
-            const commentApiUrl = `${request.nextUrl.origin || ''}/api/comment/list?postId=${postId}${userId ? `&userId=${userId}` : ''}`;
-            const commentRes = await fetch(commentApiUrl);
-            const commentJson = await commentRes.json();
-            if (commentJson?.data?.comments) {
-                comments = commentJson.data.comments;
-            }
-        } catch (e) {
-            // fallback: comments empty
-        }
-        // Build response object to match post list
+        // No need to fetch or return comments list in post detail API
+        // Get share count for this post
+        const Share = (await import('@/models/Share')).default;
+        const shareCount = await Share.countDocuments({ postId: post._id,type:'share' });
+        // Build response object to match post list (without comments array)
         const responsePost = {
             postId: post._id,
             user: userObj,
@@ -134,9 +126,9 @@ export async function GET(request: NextRequest) {
             updatedAt: post.updatedAt,
             commentCount,
             likeCount,
+            shareCount,
             userLike,
-            totalVotes,
-            comments
+            totalVotes
         };
         return NextResponse.json({ data: { status: true, post: responsePost } });
     } catch (error: any) {

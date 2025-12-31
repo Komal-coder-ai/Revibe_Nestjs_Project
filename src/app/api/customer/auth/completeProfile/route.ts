@@ -102,36 +102,11 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
 import { NextRequest } from 'next/server';
-import { z } from 'zod';
-
-export const completeProfileSchema = z.object({
-  userId: z.string(),
-  name: z.string().min(3),
-  username: z.string().min(3),
-  email: z.string().email(),
-  bio: z.string().optional(),
-  mobile: z.string().optional(),
-  countryCode: z.string().optional(),
-  profileImage: z.array(z.object({
-    imageUrl: z.string(),
-    thumbUrl: z.string(),
-    type: z.string(),
-    width: z.string(),
-    height: z.string(),
-    orientation: z.string(),
-    format: z.string(),
-  })).optional(),
-  coverImage: z.array(z.object({
-    imageUrl: z.string(),
-    thumbUrl: z.string(),
-    type: z.string(),
-    width: z.string(),
-    height: z.string(),
-    orientation: z.string(),
-    format: z.string(),
-  })).optional(),
-  referralCode: z.string().optional(),
-});
+// Update the import path below to the correct location of your schemas file
+// Update the path below to the actual location of your schemas file
+import { completeProfileSchema } from '@/app/api/customer/auth/validator/schemas';
+// If the above path is still incorrect, adjust it to the correct relative or absolute path where 'schemas.ts' exists.
+// If the above path is incorrect, adjust it to the actual path where 'schemas.ts' exists.
 
 // ...existing code...
 
@@ -228,11 +203,11 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ data: { status: false, message: 'User not found' } }, { status: 404 });
 
     const aadharEntered = Boolean(user.aadhar && user.aadhar.length > 0);
-    const profileCompleted = Boolean(user.username && user.email && user.bio && user.profileImage && user.profileImage.length > 0);
+    const profileCompleted = Boolean(user.username && user.email  && user.profileImage && user.profileImage.length > 0);
     return NextResponse.json({
       data: {
         status: true,
-        message: 'Profile completed successfully',
+        message: 'Profile completed successfully',     
         userId: user._id?.toString?.() ?? user._id,
         aadharEntered,
         profileCompleted,

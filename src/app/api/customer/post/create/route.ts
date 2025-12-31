@@ -84,13 +84,20 @@
  *               options:
  *                 type: array
  *                 items:
- *                   type: string
- *                 example: ["A", "B", "C", "D"]
+ *                   type: object
+ *                   properties:
+ *                     text:
+ *                       type: string
+ *                 example:
+ *                   - text: "Stories"
+ *                   - text: "Reels"
+ *                   - text: "Posts"
  *                 default: []
  *               correctOption:
- *                 type: string
- *                 example: "A"
- *                 default: ""
+ *                 type: integer
+ *                 description: "Index of the correct option (0-based)"
+ *                 example: 1
+ *                 default: 0
  *     responses:
  *       200:
  *         description: Post created successfully

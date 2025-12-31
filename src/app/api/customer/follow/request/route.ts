@@ -18,8 +18,9 @@
  *                 example: "65a1234567890abcdef12345"
  *               action:
  *                 type: string
- *                 enum: ["accept", "reject"]
- *                 example: "accept"
+ *                 enum: ["1", "2", "3"]
+ *                 example: "1"
+ *                 description: "1 = accept, 2 = reject, 3 = cancel"
  *               userId:
  *                 type: string
  *                 example: "65a1234567890abcdef67890"

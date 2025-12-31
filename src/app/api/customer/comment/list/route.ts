@@ -123,8 +123,12 @@ export async function GET(request: NextRequest) {
     }));
     // Get like counts for all comments
     const commentIds = allComments.map(c => c.commentId);
+    // Convert commentIds to ObjectId for aggregation
+    const objectCommentIds = commentIds.map(id =>
+      typeof id === 'string' ? new mongoose.Types.ObjectId(id) : id
+    );
     const likeCountsArr = await Like.aggregate([
-      { $match: { targetId: { $in: commentIds }, targetType: 'comment', isDeleted: false } },
+      { $match: { targetId: { $in: objectCommentIds }, targetType: 'comment', isDeleted: false } },
       { $group: { _id: '$targetId', count: { $sum: 1 } } }
     ]);
     const likeCounts: Record<string, number> = {};
@@ -154,8 +158,12 @@ export async function GET(request: NextRequest) {
     // Attach user info and commentLike to each comment
     allComments.forEach((c) => {
       c.userProfile = userMap[c.userId.toString()] || null;
-      c.likeCount = likeCounts[c.commentId] || 0;
-      (c as any).commentLike = userLikesMap[c.commentId] || false;
+      // Debug: Log mapping for likeCount assignment
+      const commentIdStr = c.commentId.toString();
+      const count = likeCounts[commentIdStr] || 0;
+      console.log(`DEBUG: Assigning likeCount for commentId ${commentIdStr}:`, count);
+      c.likeCount = count;
+      (c as any).commentLike = userLikesMap[commentIdStr] || false;
     });
     // Build a map of comments by _id
     const commentMap: Record<string, CommentDoc> = {};

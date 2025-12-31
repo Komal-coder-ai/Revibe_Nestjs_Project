@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 // Update the import path below if your mongoose connection utility is in a different location
 import connectDB from '@/lib/db';
-// If the file does not exist, create 'lib/mongoose.ts' with your connectToDB function.
+// If the file does not exist, create 'lib/mongoose.ts' with your connectDB function.
 import User from '@/models/User';
 import { aadharSchema } from '../validator/schemas';
 
@@ -10,54 +10,54 @@ export async function POST(req: Request) {
   try {
     await connectDB();
     const body = await req.json();
-  /**
-   * @swagger
-   * /api/customer/auth/aadhar:
-   *   post:
-   *     summary: Save user's Aadhar number
-   *     description: Validates and saves the Aadhar number for a user. Checks for uniqueness and updates the user profile.
-   *     tags:
-   *       - Auth
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             type: object
-   *             properties:
-   *               userId:
-   *                 type: string
-   *                 example: "65a1234567890abcdef12345"
-   *               aadhar:
-   *                 type: string
-   *                 example: "123456789012"
-   *     responses:
-   *       200:
-   *         description: Aadhar saved successfully
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 status:
-   *                   type: boolean
-   *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: "Aadhar saved"
-   *                 userId:
-   *                   type: string
-   *                 aadharEntered:
-   *                   type: boolean
-   *                 profileCompleted:
-   *                   type: boolean
-   *                 aadharNo:
-   *                   type: string
-   *                 name:
-   *                   type: string
-   *                   example: "Rajesh Kumar"
-   
-   */
+    /**
+     * @swagger
+     * /api/customer/auth/aadhar:
+     *   post:
+     *     summary: Save user's Aadhar number
+     *     description: Validates and saves the Aadhar number for a user. Checks for uniqueness and updates the user profile.
+     *     tags:
+     *       - Auth
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               userId:
+     *                 type: string
+     *                 example: "65a1234567890abcdef12345"
+     *               aadhar:
+     *                 type: string
+     *                 example: "123456789012"
+     *     responses:
+     *       200:
+     *         description: Aadhar saved successfully
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 status:
+     *                   type: boolean
+     *                   example: true
+     *                 message:
+     *                   type: string
+     *                   example: "Aadhar saved"
+     *                 userId:
+     *                   type: string
+     *                 aadharEntered:
+     *                   type: boolean
+     *                 profileCompleted:
+     *                   type: boolean
+     *                 aadharNo:
+     *                   type: string
+     *                 name:
+     *                   type: string
+     *                   example: "Rajesh Kumar"
+     
+     */
     const parse = aadharSchema.safeParse(body);
     if (!parse.success) return NextResponse.json({ data: { status: false, message: 'Validation error', errors: parse.error.issues } }, { status: 400 });
     const { userId, aadhar } = parse.data;

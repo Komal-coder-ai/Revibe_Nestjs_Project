@@ -1,69 +1,59 @@
+/**
+ * @openapi
+ * /api/customer/livestream/start:
+ *   post:
+ *     summary: Start a new live stream
+ *     description: Creates a new live stream for a user and returns stream details and Mux info.
+ *     tags:
+ *       - LiveStream
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               streamer:
+ *                 type: string
+ *                 description: User ID of the streamer
+ *               title:
+ *                 type: string
+ *                 description: Title of the stream
+ *               category:
+ *                 type: string
+ *                 description: Category of the stream
+ *             required:
+ *               - streamer
+ *               - title
+ *               - category
+ *     responses:
+ *       200:
+ *         description: Live stream started successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     status:
+ *                       type: boolean
+ *                     stream:
+ *                       type: object
+ *                     muxStream:
+ *                       type: object
+ *       500:
+ *         description: Server error
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import LiveStream from '@/models/LiveStream';
-import { connectToDB } from '@/lib/mongoose';
+import connectDB from '@/lib/db';
 import mux from '@/lib/mux';
 
-// Swagger documentation for this endpoint
-export const swagger = {
-  paths: {
-    "/api/livestream/start": {
-      post: {
-        tags: ["LiveStream"],
-        summary: "Start a new live stream",
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  streamer: { type: "string", description: "User ID of the streamer" },
-                  title: { type: "string", description: "Title of the stream" },
-                  category: { type: "string", description: "Category of the stream" }
-                },
-                required: ["streamer", "title", "category"]
-              },
-              example: {
-                streamer: "65a1b2c3d4e5f6a7b8c9d0e1",
-                title: "My Live Stream",
-                category: "Music"
-              }
-            }
-          }
-        },
-        responses: {
-          "200": {
-            description: "Live stream started successfully",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    data: {
-                      type: "object",
-                      properties: {
-                        status: { type: "boolean" },
-                        stream: { type: "object" },
-                        muxStream: { type: "object" }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": { description: "Server error", content: { "application/json": {} } }
-        }
-      }
-    }
-  },
-  components: {
-    schemas: {}
-  }
-};
 
 export async function POST(req: NextRequest) {
-  await connectToDB();
+  await connectDB();
   try {
     const { streamer, title, category } = await req.json();
     // Create Mux live stream

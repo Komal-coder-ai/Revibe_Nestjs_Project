@@ -4,13 +4,138 @@ A modern Next.js application with MongoDB integration, featuring separate admin 
 
 ## Features
 
-- ✅ **Next.js 15** - Latest version with App Router
-- ✅ **MongoDB & Mongoose** - Robust database with schemas
-- ✅ **Separate Portals** - Admin and Customer authentication
-- ✅ **Secure Authentication** - Password hashing with bcryptjs
-- ✅ **TypeScript** - Full type safety
-- ✅ **Tailwind CSS** - Modern, responsive UI
-- ✅ **API Routes** - RESTful login endpoints
+
+# Revibe NestJS & Next.js Project
+
+## Overview
+This project is a full-stack application built with Next.js (frontend) and NestJS (backend API). It features an admin dashboard, customer authentication, social features (like, follow, comment), livestreaming, and more. The backend is organized as an API-first architecture, while the frontend uses modern React and Tailwind CSS.
+
+---
+
+## Project Structure
+
+```
+.
+├── create-admin.bat                # Script to create admin user
+├── next-env.d.ts                   # Next.js TypeScript environment
+├── next.config.ts                  # Next.js configuration
+├── package.json                    # Project dependencies and scripts
+├── postcss.config.mjs              # PostCSS config for Tailwind
+├── tailwind.config.ts              # Tailwind CSS config
+├── tsconfig.json                   # TypeScript config
+├── scripts/                        # Utility scripts (hash passwords, seed DB)
+├── src/
+│   ├── app/                        # Next.js app directory
+│   │   ├── globals.css             # Global styles
+│   │   ├── layout.tsx              # Root layout
+│   │   ├── page.tsx                # Main landing page
+│   │   ├── admin/                  # Admin dashboard (UI)
+│   │   ├── api/                    # API routes (NestJS)
+│   │   ├── api-docs/               # Swagger UI for API docs
+│   │   ├── customer/               # Customer login UI
+│   │   └── socket/                 # Socket.io integration
+│   ├── components/                 # Shared React components
+│   ├── lib/                        # Utility libraries (auth, db, cloudinary, etc.)
+│   └── models/                     # Mongoose models (User, Post, Comment, etc.)
+└── README.md                       # Project documentation
+```
+
+---
+
+## Key Features
+- **Admin Dashboard**: Manage users, products, orders, and settings
+- **Customer Authentication**: Login, Aadhar verification, profile completion
+- **Social Features**: Like, comment, follow, share, save posts
+- **Livestreaming**: Start, end, chat, like, view livestreams
+- **API Documentation**: Swagger UI at `/api-docs`
+- **Socket.io**: Real-time features
+- **Cloudinary Integration**: Media upload and delete
+- **Modular Structure**: Organized by feature for scalability
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js (v18+ recommended)
+- MongoDB instance
+
+### Installation
+1. Clone the repository:
+  ```sh
+  git clone <repo-url>
+  cd Revibe_Nestjs_Project
+  ```
+2. Install dependencies:
+  ```sh
+  npm install
+  ```
+3. Configure environment variables:
+  - Create a `.env` file in the root directory (see `.env.example` if available)
+4. (Optional) Seed the database:
+  ```sh
+  node scripts/seedDatabase.js
+  ```
+5. Start the development server:
+  ```sh
+  npm run dev
+  ```
+
+---
+
+## Scripts
+- `npm run dev` — Start Next.js in development mode
+- `npm run build` — Build for production
+- `npm run start` — Start production server
+- `node scripts/hashPassword.js` — Hash a password (utility)
+- `node scripts/seedDatabase.js` — Seed the database
+
+---
+
+## Folder Details
+- **src/app/admin/**: Admin dashboard UI and routes
+- **src/app/api/**: All backend API endpoints (NestJS style)
+- **src/app/api-docs/**: Swagger UI and custom styles
+- **src/app/customer/**: Customer login and onboarding
+- **src/app/socket/**: Real-time socket logic
+- **src/components/**: Shared React components
+- **src/lib/**: Utility libraries (auth, db, cloudinary, etc.)
+- **src/models/**: Mongoose models for all entities
+
+---
+
+## API Endpoints
+- All API routes are under `/api/`
+- See Swagger docs at `/api-docs` for full API reference
+
+---
+
+## Technologies Used
+- **Next.js** (React, SSR, API routes)
+- **NestJS** (API structure)
+- **MongoDB** (Mongoose ODM)
+- **Tailwind CSS** (UI styling)
+- **Socket.io** (Real-time communication)
+- **Cloudinary** (Media management)
+
+---
+
+## Contributing
+1. Fork the repository
+2. Create a new branch (`git checkout -b feature/your-feature`)
+3. Commit your changes
+4. Push to the branch (`git push origin feature/your-feature`)
+5. Open a Pull Request
+
+---
+
+## License
+[MIT](LICENSE)
+
+---
+
+## Contact
+For questions or support, please open an issue or contact the maintainer.
 
 ## Project Structure
 

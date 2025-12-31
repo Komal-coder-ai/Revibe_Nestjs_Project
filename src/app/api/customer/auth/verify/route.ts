@@ -18,10 +18,10 @@
  *                 example: "+91"
  *               mobile:
  *                 type: string
- *                 example: "9876543210"
+ *                 example: "9039418742"
  *               otp:
  *                 type: string
- *                 example: "123456"
+ *                 example: "1234"
  *     responses:
  *       200:
  *         description: OTP verified successfully

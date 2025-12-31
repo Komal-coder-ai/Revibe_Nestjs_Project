@@ -38,6 +38,13 @@
  *         schema:
  *           type: integer
  *           example: 10
+ *       - in: query
+ *         name: search
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: ""
+ *         description: "Search likes by username or name."
  *     responses:
  *       200:
  *         description: Likes fetched successfully
@@ -92,15 +99,15 @@ export async function GET(request: NextRequest) {
       .lean();
     // Fetch user info for each like
     const userIds = likes.map(l => l.user?.toString()).filter(Boolean);
-    type UserType = { _id: any; name: string; username: string; profileImage?: any };
+    type UserType = { userId: any; name: string; username: string; profileImage?: any };
     const rawUsers = await User.find({ _id: { $in: userIds } }).lean();
     const users: UserType[] = rawUsers.map((u: any) => ({
-      _id: u._id,
+      userId: u._id,
       name: u.name,
       username: u.username,
       profileImage: u.profileImage || []
     }));
-    const userMap = Object.fromEntries(users.map(u => [u._id.toString(), { _id: u._id, name: u.name, username: u.username, profileImage: u.profileImage }]));
+    const userMap = Object.fromEntries(users.map(u => [u.userId.toString(), { userId: u.userId, name: u.name, username: u.username, profileImage: u.profileImage }]));
     const likesWithUser = likes.map(l => ({ ...l, user: userMap[l.user?.toString()] || null }));
     // Check if userId liked this target
     let userLike = false;

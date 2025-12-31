@@ -48,13 +48,13 @@
  *         required: false
  *         schema:
  *           type: string
- *           example: "image"
+ *           example: ""
  *       - in: query
  *         name: hashtag
  *         required: false
  *         schema:
  *           type: string
- *           example: "#fun"
+ *           example: ""
  *     responses:
  *       200:
  *         description: Posts fetched successfully
@@ -82,7 +82,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB  from '@/lib/db';
+import connectDB from '@/lib/db';
 import Post from '@/models/Post';
 import Hashtag from '@/models/Hashtag';
 import mongoose from 'mongoose';
@@ -221,13 +221,25 @@ export async function GET(req: NextRequest) {
       followersCountMap[f._id.toString()] = f.count;
     });
 
+    // Aggregate share counts for each post
+    const Share = (await import('@/models/Share')).default;
+    const shareCountsArr = await Share.aggregate([
+      { $match: { postId: { $in: postIds }, type: "share" } },
+      { $group: { _id: '$postId', count: { $sum: 1 } } }
+    ]);
+    const shareCounts: Record<string, number> = {};
+    shareCountsArr.forEach((s: any) => {
+      shareCounts[s._id.toString()] = s.count;
+    });
+
     const postsWithPollStats = posts.map(post => {
       // Convert _id to postId for all posts
       const { _id, ...rest } = post;
       let basePost = { ...rest, postId: _id };
-      // Add commentCount and likeCount
+      // Add commentCount, likeCount, shareCount
       const commentCount = commentCounts[_id.toString()] || 0;
       const likeCount = likeResults[_id.toString()]?.likeCount || 0;
+      const shareCount = shareCounts[_id.toString()] || 0;
       // Add followersCount to user
       if (basePost.user && basePost.user._id) {
         basePost.user.followersCount = followersCountMap[basePost.user._id.toString()] || 0;
@@ -250,9 +262,9 @@ export async function GET(req: NextRequest) {
             : 0
         }));
         // Remove original options from response, send as 'options' key
-        return { ...basePost, totalVotes, options: pollResults, commentCount, likeCount, userLike };
+        return { ...basePost, totalVotes, options: pollResults, commentCount, likeCount, shareCount, userLike };
       }
-      return { ...basePost, commentCount, likeCount, userLike };
+      return { ...basePost, commentCount, likeCount, shareCount, userLike };
     });
     const total = await Post.countDocuments(filter);
     let trending = [];

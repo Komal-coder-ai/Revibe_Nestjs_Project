@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import 'swagger-ui-react/swagger-ui.css';
+import './swagger-dark.css';
 
 // Dynamically import SwaggerUI with no SSR and suppress React warnings
 const SwaggerUI = dynamic(
