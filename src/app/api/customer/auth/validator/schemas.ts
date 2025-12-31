@@ -32,15 +32,18 @@ export const profileImageObjectSchema = z.object({
   format: z.string().optional(),
 });
 
+
+// Schema for complete profile
 export const completeProfileSchema = z.object({
-  userId: z.string().min(1),
-  name: z.string().optional(),
-  username: z.string().min(3).optional(),
-  email: z.string().email().optional(),
+  userId: z.string().min(1, 'User ID is required'),
+  name: z.string().min(1, 'Name is required'),
+  username: z.string().min(1, 'Username is required'),
+  email: z.string().email('Invalid email address'),
   bio: z.string().optional(),
-  countryCode: z.string().optional(),
   mobile: z.string().optional(),
+  countryCode: z.string().optional(),
   profileImage: z.array(profileImageObjectSchema).optional(),
   coverImage: z.array(profileImageObjectSchema).optional(),
   referralCode: z.string().optional(),
 });
+

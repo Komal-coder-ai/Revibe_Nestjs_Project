@@ -1,67 +1,58 @@
+/**
+ * @openapi
+ * /api/customer/livestream/view:
+ *   post:
+ *     summary: Join a live stream and get viewer details
+ *     description: Adds a user to a live stream's viewers and returns viewer count and details.
+ *     tags:
+ *       - LiveStream
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               streamId:
+ *                 type: string
+ *                 description: LiveStream ID
+ *               userId:
+ *                 type: string
+ *                 description: User ID joining the stream
+ *             required:
+ *               - streamId
+ *               - userId
+ *     responses:
+ *       200:
+ *         description: Viewer joined and details returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     status:
+ *                       type: boolean
+ *                     viewerCount:
+ *                       type: integer
+ *                     viewers:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *       404:
+ *         description: Stream not found or inactive
+ *       500:
+ *         description: Server error
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import LiveStream from '@/models/LiveStream';
-import { connectToDB } from '@/lib/mongoose';
+import connectDB  from '@/lib/db';
 
-// Swagger documentation for this endpoint
-export const swagger = {
-  paths: {
-    "/api/livestream/view": {
-      post: {
-        tags: ["LiveStream"],
-        summary: "Join a live stream and get viewer details",
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  streamId: { type: "string", description: "LiveStream ID" },
-                  userId: { type: "string", description: "User ID joining the stream" }
-                },
-                required: ["streamId", "userId"]
-              },
-              example: {
-                streamId: "65a1b2c3d4e5f6a7b8c9d0e1",
-                userId: "65a1b2c3d4e5f6a7b8c9d0e2"
-              }
-            }
-          }
-        },
-        responses: {
-          "200": {
-            description: "Viewer joined and details returned",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    data: {
-                      type: "object",
-                      properties: {
-                        status: { type: "boolean" },
-                        viewerCount: { type: "integer" },
-                        viewers: { type: "array", items: { type: "object" } }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": { description: "Stream not found or inactive", content: { "application/json": {} } },
-          "500": { description: "Server error", content: { "application/json": {} } }
-        }
-      }
-    }
-  },
-  components: {
-    schemas: {}
-  }
-};
 
 export async function POST(req: NextRequest) {
-  await connectToDB();
+  await connectDB();
   try {
     const { streamId, userId } = await req.json();
     const stream = await LiveStream.findById(streamId);

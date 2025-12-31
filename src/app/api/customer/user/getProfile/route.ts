@@ -87,11 +87,14 @@ export async function GET(req: Request) {
     const user = await User.findById(userId);
     if (!user) return NextResponse.json({ data: { status: false, message: 'User not found' } }, { status: 404 });
 
-    // Get followers and followings count
+
+    // Get followers, followings, and post count
     const Follow = (await import('@/models/Follow')).default;
-    const [followers, followings] = await Promise.all([
+    const Post = (await import('@/models/Post')).default;
+    const [followers, followings, postCount] = await Promise.all([
       Follow.countDocuments({ following: userId, status: 'accepted', isDeleted: false }),
-      Follow.countDocuments({ follower: userId, status: 'accepted', isDeleted: false })
+      Follow.countDocuments({ follower: userId, status: 'accepted', isDeleted: false }),
+      Post.countDocuments({ userId, isDeleted: false })
     ]);
 
 
@@ -102,6 +105,7 @@ export async function GET(req: Request) {
       mobile: raw.mobile || '',
       aadhar: raw.aadhar || '',
       username: raw.username || '',
+      name: raw.name || '',
       email: raw.email || '',
       bio: raw.bio || '',
       profileImage: raw.profileImage || '',
@@ -109,7 +113,8 @@ export async function GET(req: Request) {
       isVerified: !!raw.isVerified,
       userType: raw.userType || '',
       followers,
-      followings
+      followings,
+      postCount
     };
     // console.log(profile);
     

@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@mux/mux-node": "^12.8.1",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.8.0",
     "jsonwebtoken": "^9.0.3",
