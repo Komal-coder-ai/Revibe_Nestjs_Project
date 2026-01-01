@@ -224,23 +224,23 @@ export default function UserDetailPage() {
               {/* User Header Card */}
               <Card sx={{ p: 3 }}>
                 <Grid container spacing={3} alignItems="flex-start">
-                  <Grid item>
-                    <Avatar
-                      sx={{
-                        width: 80,
-                        height: 80,
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        fontSize: '2rem',
-                        fontWeight: 'bold',
-                      }}
-                      src={userDetails.profileImage}
-                    >
-                      {userDetails.name && userDetails.name !== 'N/A'
-                        ? userDetails.name.charAt(0).toUpperCase()
-                        : '?'}
-                    </Avatar>
-                  </Grid>
-                  <Grid item xs>
+                  <Grid component="div">
+                  <Avatar
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      fontSize: '2rem',
+                      fontWeight: 'bold',
+                    }}
+                    src={userDetails.profileImage}
+                  >
+                    {userDetails.name && userDetails.name !== 'N/A'
+                      ? userDetails.name.charAt(0).toUpperCase()
+                      : '?'}
+                  </Avatar>
+                </Grid>
+                  <Grid component="div">
                     <Stack spacing={1}>
                       <Typography variant="h5" component="div" sx={{ fontWeight: 'bold' }}>
                          {userDetails.name && userDetails.name !== 'N/A' ? userDetails.name : '-'}
@@ -267,7 +267,7 @@ export default function UserDetailPage() {
                       </Stack>
                     </Stack>
                   </Grid>
-                  <Grid item>
+                  <Grid component="div">
                     <Stack alignItems="flex-end">
                       <Typography variant="caption" color="textSecondary">
                         Member Since
@@ -379,7 +379,7 @@ export default function UserDetailPage() {
                     </Box>
 
 
-                    <Grid item xs={12}>
+                    <Grid component="div">
                       <Card
                         sx={{
                           p: 3,

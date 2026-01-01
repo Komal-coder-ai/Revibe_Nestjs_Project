@@ -74,15 +74,17 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update feed status
-    const updatedFeed = await Feed.findByIdAndUpdate(
+    const updatedFeed = await Feed.findByIdAndUpdate<
+      typeof Feed
+    >(
       feedId,
       { status: Number(status) },
       { new: true }
     ).lean();
 
-    if (!updatedFeed) {
+    if (!updatedFeed || !updatedFeed._id) {
       return NextResponse.json(
-        { success: false, message: 'Feed not found' },
+        { success: false, message: 'Feed not found or invalid response' },
         { status: 404 }
       );
     }
