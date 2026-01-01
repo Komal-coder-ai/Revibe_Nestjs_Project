@@ -109,6 +109,8 @@ export async function GET(request: NextRequest) {
         // Get share count for this post
         const Share = (await import('@/models/Share')).default;
         const shareCount = await Share.countDocuments({ postId: post._id,type:'share' });
+        // Add isLoggedInUser key as in post list API
+        const isLoggedInUser = userObj && userObj._id && userId && userObj._id.toString() === userId;
         // Build response object to match post list (without comments array)
         const responsePost = {
             postId: post._id,
@@ -128,7 +130,8 @@ export async function GET(request: NextRequest) {
             likeCount,
             shareCount,
             userLike,
-            totalVotes
+            totalVotes,
+            isLoggedInUser
         };
         return NextResponse.json({ data: { status: true, post: responsePost } });
     } catch (error: any) {

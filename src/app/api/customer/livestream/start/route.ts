@@ -5,7 +5,7 @@
  *     summary: Start a new live stream
  *     description: Creates a new live stream for a user and returns stream details and Mux info.
  *     tags:
- *       - LiveStream
+ *       - Livestream
  *     requestBody:
  *       required: true
  *       content:

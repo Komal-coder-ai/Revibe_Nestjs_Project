@@ -45,27 +45,42 @@ import cloudinary from '@/lib/cloudinary';
 
 export async function POST(request: NextRequest) {
     try {
+        console.log('Received POST request for Cloudinary upload');
         const formData = await request.formData();
+        console.log('FormData:', formData);
         const file = formData.get('file');
         const folder = formData.get('folder');
+        console.log('File:', file);
+        console.log('Folder:', folder);
         if (!file || !(file instanceof File)) {
+            console.log('No file uploaded or file is not instance of File');
             return NextResponse.json({ success: false, message: 'No file uploaded' }, { status: 400 });
         }
         const folderName = typeof folder === 'string' && folder.trim() !== '' ? folder.trim() : 'uploads';
+        console.log('Using folderName:', folderName);
         const arrayBuffer = await file.arrayBuffer();
+        console.log('ArrayBuffer length:', arrayBuffer.byteLength);
         const buffer = Buffer.from(arrayBuffer);
+        console.log('Buffer length:', buffer.length);
         const publicId = `image_${Date.now()}`;
+        console.log('Generated publicId:', publicId);
         const result = await new Promise((resolve, reject) => {
             cloudinary.uploader.upload_stream(
                 { folder: folderName, public_id: publicId },
                 (error: import('cloudinary').UploadApiErrorResponse | undefined, result: import('cloudinary').UploadApiResponse | undefined) => {
-                    if (error) return reject(error);
+                    if (error) {
+                        console.error('Cloudinary upload error:', error);
+                        return reject(error);
+                    }
+                    console.log('Cloudinary upload result:', result);
                     resolve(result);
                 }
             ).end(buffer);
         });
+        console.log('Final result:', result);
         return NextResponse.json({ success: true, url: (result as any).secure_url });
     } catch (error: any) {
+        console.error('Error in Cloudinary upload route:', error);
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }
 }
