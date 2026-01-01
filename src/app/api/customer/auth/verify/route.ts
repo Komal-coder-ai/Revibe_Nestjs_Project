@@ -131,6 +131,10 @@ export async function POST(request: NextRequest) {
         accessToken: access,
         refreshToken: refresh,
         userId: user._id?.toString?.() ?? user._id,
+        profileImage: user.profileImage || '',
+        username: user.username || '',
+        name: user.name || '',
+        coverImage: user.coverImage || '',
         aadharEntered,
         profileCompleted
       }

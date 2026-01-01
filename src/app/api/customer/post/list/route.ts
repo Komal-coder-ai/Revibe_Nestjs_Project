@@ -248,6 +248,8 @@ export async function GET(req: NextRequest) {
       }
       // Add userLike status for the current user
       const userLike = likeResults[_id.toString()]?.userLike || false;
+      // Add isLoggedInUser flag
+      const isLoggedInUser = basePost.user && basePost.user._id && basePost.user._id.toString() === userId;
       if ((post.type === 'poll' || post.type === 'quiz') && Array.isArray(post.options)) {
         const postVotes = votes.filter((v: any) => v.post.toString() === post._id.toString());
         const totalVotes = postVotes.length;
@@ -264,9 +266,9 @@ export async function GET(req: NextRequest) {
             : 0
         }));
         // Remove original options from response, send as 'options' key
-        return { ...basePost, totalVotes, options: pollResults, commentCount, likeCount, shareCount, userLike };
+        return { ...basePost, totalVotes, options: pollResults, commentCount, likeCount, shareCount, userLike, isLoggedInUser };
       }
-      return { ...basePost, commentCount, likeCount, shareCount, userLike };
+      return { ...basePost, commentCount, likeCount, shareCount, userLike, isLoggedInUser };
     });
     const total = await Post.countDocuments(filter);
     let trending = [];
@@ -276,6 +278,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       data: {
         status: true,
+        message: 'Posts fetched',
         posts: postsWithPollStats,
         trending,
         pagination: {
