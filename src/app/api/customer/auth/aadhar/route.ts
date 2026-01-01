@@ -87,7 +87,7 @@ export async function POST(req: Request) {
 
     // Only return aadharEntered and profileCompleted
     const aadharEntered = Boolean(user.aadhar && user.aadhar.length > 0);
-    const profileCompleted = Boolean(user.username && user.email && user.bio && user.profileImage);
+    const profileCompleted = Boolean(user.username && user.profileImage);
     return NextResponse.json({
       data: {
         status: true,
@@ -96,7 +96,7 @@ export async function POST(req: Request) {
         aadharEntered,
         profileCompleted,
         aadharNo: user.aadhar,
-        name: "Rajesh Kumar"
+        name: user.name
       }
     });
   } catch (error) {

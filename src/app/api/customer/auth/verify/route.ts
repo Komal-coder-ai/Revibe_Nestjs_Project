@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
         }
       }, { status: 400 });
     }
-  
+
     const { countryCode, mobile, otp } = parse.data;
     const user = await User.findOne({ countryCode, mobile });
     if (!user) {
@@ -77,9 +77,26 @@ export async function POST(request: NextRequest) {
         }
       }, { status: 404 });
     }
-    console.log('DEBUG: User found', { otpFromUser: otp, userOtp: user.otp, userOtpExpiresAt: user.otpExpiresAt, now: new Date() });
+    if (user && !user.isActive) {
+      return NextResponse.json(
+        {
+          data: {
+            status: false,
+            message: 'User is not active please contact support to activate your account',
+          }
+        },
+        { status: 403 }
+      );
+    }
+    console.log('DEBUG: User found', {
+      otpFromUser: otp,
+      userOtp: user.otp,
+      userOtpExpiresAt: user.otpExpiresAt,
+      now: new Date()
+    });
     if (!user.otp || !user.otpExpiresAt || user.otp !== otp) {
-      console.log('DEBUG: OTP mismatch or missing', { userOtp: user.otp, userOtpExpiresAt: user.otpExpiresAt, otpFromUser: otp });
+      console.log('DEBUG: OTP mismatch or missing',
+        { userOtp: user.otp, userOtpExpiresAt: user.otpExpiresAt, otpFromUser: otp });
       return NextResponse.json({
         data: {
           status: false,
@@ -88,7 +105,8 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
     if (user.otpExpiresAt < new Date()) {
-      console.log('DEBUG: OTP expired', { userOtpExpiresAt: user.otpExpiresAt, now: new Date() });
+      console.log('DEBUG: OTP expired',
+        { userOtpExpiresAt: user.otpExpiresAt, now: new Date() });
       return NextResponse.json({
         data: {
           status: false,
@@ -103,9 +121,9 @@ export async function POST(request: NextRequest) {
     const refresh = signRefreshToken({ sub: user._id.toString() });
     user.refreshToken = refresh;
     await user.save();
-  
+
     const aadharEntered = Boolean(user.aadhar && user.aadhar.length > 0);
-    const profileCompleted = Boolean(user.username && user.email && user.bio && user.profileImage);
+    const profileCompleted = Boolean(user.username && user.profileImage);
     return NextResponse.json({
       data: {
         status: true,

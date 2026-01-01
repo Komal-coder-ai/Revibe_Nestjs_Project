@@ -42,11 +42,11 @@ import connectDB from '@/lib/db';
 // import Otp from '../../../../models/Otp';
 import User from '@/models/User';
 import { startOtpSchema } from '../validator/schemas';
-import { generateOTP, sendOtpMock } from'@/../../src/lib/otp';
+import { generateOTP, sendOtpMock } from '@/../../src/lib/otp';
 
 export async function POST(request: Request) {
   try {
-      await connectDB();
+    await connectDB();
     const body = await request.json();
     const parse = startOtpSchema.safeParse(body);
     if (!parse.success) return NextResponse.json({ data: { status: false, message: 'Validation error', errors: parse.error.issues } }, { status: 400 });
@@ -54,7 +54,25 @@ export async function POST(request: Request) {
 
     let user = await User.findOne({ countryCode, mobile });
     if (!user) {
-      return NextResponse.json({ data: { status: false, message: 'User not found' } }, { status: 404 });
+      return NextResponse.json(
+        {
+          data: {
+            status: false,
+            message: 'User not found'
+          }
+        },
+        { status: 404 });
+    }
+    if (user && !user.isActive) {
+      return NextResponse.json(
+        {
+          data: {
+            status: false,
+            message: 'User is not active please contact support to activate your account',
+          }
+        },
+        { status: 403 }
+      );
     }
     const code = generateOTP();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);

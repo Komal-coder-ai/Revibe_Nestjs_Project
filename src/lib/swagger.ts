@@ -3,12 +3,12 @@ import swaggerJSDoc from 'swagger-jsdoc';
 const swaggerDefinition = {
   openapi: '3.0.0',
   info: {
-    title: 'NewRevibe API Documentation',
+    title: 'Revibe API Documentation',
     version: '1.0.0',
-    description: 'API documentation for NewRevibe admin and customer platform',
+    description: 'API documentation for Revibe admin and customer platform',
     contact: {
       name: 'API Support',
-      email: 'support@newrevibe.com',
+      email: 'support@revibe.com',
     },
   },
   servers: [
@@ -134,7 +134,7 @@ const swaggerDefinition = {
 
 const options = {
   swaggerDefinition,
-  apis: ['./src/app/api/**/*.ts'], // Path to the API routes
+  apis: [process.cwd() + '/src/app/api/**/*.ts'], // Use absolute path for Vercel compatibility
 };
 
 const swaggerSpec = swaggerJSDoc(options);

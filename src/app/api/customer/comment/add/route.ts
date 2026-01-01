@@ -67,6 +67,19 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
     const { postId, userId, content, mentions = [], parentId = null } = parsed.data;
+
+    // Check if user is demo
+    const User = (await import('@/models/User')).default;
+    const user = await User.findById(userId);
+    if (!user) {
+      return NextResponse.json({
+        data: {
+          status: false,
+          message: 'User not found'
+        }
+      }, { status: 404 });
+    }
+
     const comment = await Comment.create({
       postId,
       userId,
@@ -84,7 +97,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.log(error);
-    
     return NextResponse.json({
       data: {
         status: false,

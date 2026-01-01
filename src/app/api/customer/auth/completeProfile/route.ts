@@ -203,11 +203,11 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ data: { status: false, message: 'User not found' } }, { status: 404 });
 
     const aadharEntered = Boolean(user.aadhar && user.aadhar.length > 0);
-    const profileCompleted = Boolean(user.username && user.email  && user.profileImage && user.profileImage.length > 0);
+    const profileCompleted = Boolean(user.username && user.profileImage && user.profileImage.length > 0);
     return NextResponse.json({
       data: {
         status: true,
-        message: 'Profile completed successfully',     
+        message: 'Profile completed successfully',
         userId: user._id?.toString?.() ?? user._id,
         aadharEntered,
         profileCompleted,

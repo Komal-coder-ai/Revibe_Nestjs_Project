@@ -149,7 +149,9 @@ export async function GET(req: NextRequest) {
           as: 'user',
         }
       },
-      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: false } },
+      // Filter out posts where user is not active
+      { $match: { 'user.isActive': true } },
       {
         $lookup: {
           from: 'users',
