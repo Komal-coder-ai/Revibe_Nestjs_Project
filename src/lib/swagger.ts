@@ -17,7 +17,7 @@ const swaggerDefinition = {
       description: 'Development server',
     },
     {
-      url: 'https://your-production-domain.com',
+      url: 'https://revibe-nestjs-project.vercel.app',
       description: 'Production server',
     },
   ],
