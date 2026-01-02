@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, password } = body;
 
+    console.log('Admin login attempt for email:', email); 
     // Validate input
     if (!email || !password) {
       return NextResponse.json(
