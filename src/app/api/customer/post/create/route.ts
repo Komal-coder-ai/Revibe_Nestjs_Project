@@ -121,6 +121,7 @@ import Post from '@/models/Post';
 import { createPostSchema } from '../validator/schemas';
 import { extractHashtags } from '@/lib/hashtag';
 import Hashtag from '@/models/Hashtag';
+import { Data } from '@mux/mux-node/resources.mjs';
 
 // POST /api/post/create - Create a new post
 export async function POST(req: NextRequest) {
@@ -132,6 +133,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ data: { status: false, message: 'Validation error', errors: parse.error.issues } }, { status: 400 });
     }
     const { userId, type, media, text, caption, location, taggedUsers, options, correctOption } = parse.data;
+    console.log('create post:', parse.data);
+    
     const hashtags = extractHashtags((text || '') + ' ' + (caption || ''));
     // Update hashtag counts in Hashtag collection
     if (hashtags.length > 0) {
