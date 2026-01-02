@@ -1,4 +1,5 @@
 
+
 /**
  * @swagger
  * /api/customer/cloudinary/upload:
@@ -31,12 +32,37 @@
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 message:
- *                   type: string
- *                   example: "File uploaded"
  *                 url:
  *                   type: string
+ *                   example: "https://res.cloudinary.com/demo/image/upload/v1234567890/uploads/sample.jpg"
+ *       400:
+ *         description: No file uploaded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "No file uploaded"
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Internal server error"
  */
+
 
 
 
@@ -45,42 +71,27 @@ import cloudinary from '@/lib/cloudinary';
 
 export async function POST(request: NextRequest) {
     try {
-        console.log('Received POST request for Cloudinary upload');
         const formData = await request.formData();
-        console.log('FormData:', formData);
         const file = formData.get('file');
         const folder = formData.get('folder');
-        console.log('File:', file);
-        console.log('Folder:', folder);
         if (!file || !(file instanceof File)) {
-            console.log('No file uploaded or file is not instance of File');
             return NextResponse.json({ success: false, message: 'No file uploaded' }, { status: 400 });
         }
         const folderName = typeof folder === 'string' && folder.trim() !== '' ? folder.trim() : 'uploads';
-        console.log('Using folderName:', folderName);
         const arrayBuffer = await file.arrayBuffer();
-        console.log('ArrayBuffer length:', arrayBuffer.byteLength);
         const buffer = Buffer.from(arrayBuffer);
-        console.log('Buffer length:', buffer.length);
-        const publicId = `image_${Date.now()}`;
-        console.log('Generated publicId:', publicId);
+        const publicId = `file_${Date.now()}`;
         const result = await new Promise((resolve, reject) => {
             cloudinary.uploader.upload_stream(
-                { folder: folderName, public_id: publicId },
-                (error: import('cloudinary').UploadApiErrorResponse | undefined, result: import('cloudinary').UploadApiResponse | undefined) => {
-                    if (error) {
-                        console.error('Cloudinary upload error:', error);
-                        return reject(error);
-                    }
-                    console.log('Cloudinary upload result:', result);
+                { folder: folderName, public_id: publicId, resource_type: 'auto' },
+                (error: any, result: any) => {
+                    if (error) return reject(error);
                     resolve(result);
                 }
             ).end(buffer);
         });
-        console.log('Final result:', result);
         return NextResponse.json({ success: true, url: (result as any).secure_url });
     } catch (error: any) {
-        console.error('Error in Cloudinary upload route:', error);
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }
 }
