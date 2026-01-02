@@ -241,9 +241,9 @@ export async function GET(req: NextRequest) {
                         ? Math.round((optionCounts[idx] / totalVotes) * 100)
                         : 0
                 }));
-                return { ...basePost, totalVotes, options: pollResults, commentCount, likeCount, shareCount, userLike, followStatusCode, shareCount, isLoggedInUser };
+                return { ...basePost, totalVotes, options: pollResults, commentCount, likeCount, shareCount, userLike, followStatusCode, isLoggedInUser };
             }
-            return { ...basePost, commentCount, likeCount, shareCount, userLike, followStatusCode, shareCount, isLoggedInUser };
+            return { ...basePost, commentCount, likeCount, shareCount, userLike, followStatusCode, isLoggedInUser };
         });
         // Get total count for pagination
         const total = await SavedPost.countDocuments({ userId: new mongoose.Types.ObjectId(userId), isDeleted: false });
