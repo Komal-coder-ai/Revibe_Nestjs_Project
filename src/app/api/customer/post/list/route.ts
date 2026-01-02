@@ -73,6 +73,60 @@
  *                   type: array
  *                   items:
  *                     type: object
+ *                     properties:
+ *                       postId:
+ *                         type: string
+ *                       user:
+ *                         type: object
+ *                       taggedUsers:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                       type:
+ *                         type: string
+ *                       media:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                       text:
+ *                         type: string
+ *                       caption:
+ *                         type: string
+ *                       location:
+ *                         type: string
+ *                       hashtags:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       options:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                       correctOption:
+ *                         type: integer
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
+ *                       commentCount:
+ *                         type: integer
+ *                       likeCount:
+ *                         type: integer
+ *                       shareCount:
+ *                         type: integer
+ *                       userLike:
+ *                         type: boolean
+ *                       totalVotes:
+ *                         type: integer
+ *                         nullable: true
+ *                       isLoggedInUser:
+ *                         type: boolean
+ *                       followStatusCode:
+ *                         type: integer
+ *                         description: "Follow/friend status code between logged-in user and post's user. 0 = no relation, 1 = pending, 2 = accepted, 3 = rejected, 4 = self."
+ *                         example: 2
  *                 total:
  *                   type: integer
  *                 page:
@@ -90,6 +144,7 @@ import Comment from '@/models/Comment';
 import Vote from '@/models/Vote';
 import Like from '@/models/Like';
 import Follow from '@/models/Follow';
+import { getFollowStatusMap } from '@/common/getFollowStatusMap';
 
 // GET /api/post/list?user=...&page=1&limit=10&sort=createdAt
 // GET /api/post/list?feed=true&userId=...&page=1&limit=10&sort=createdAt
@@ -122,12 +177,12 @@ export async function GET(req: NextRequest) {
     if (blockedPostIds.length > 0) {
       filter._id = filter._id ? filter._id : { $nin: blockedPostIds.map(id => new mongoose.Types.ObjectId(id.toString())) };
     }
-    // If targetUserId is provided, fetch posts for that user (profile view)
-    if (targetUserId) {
-      filter.user = new mongoose.Types.ObjectId(targetUserId.toString());
-    } else if (feed) {
+    // If feed is true, ignore targetUserId and do not filter by it
+    if (feed) {
       // TODO: Add logic for following users, algorithmic feed, etc.
       // For now, just return all posts (could filter by following in future)
+    } else if (targetUserId) {
+      filter.user = new mongoose.Types.ObjectId(targetUserId.toString());
     }
     // If not profile view, but userId is provided, you can use it for feed logic or personalization
     if (type) {
@@ -234,6 +289,10 @@ export async function GET(req: NextRequest) {
       shareCounts[s._id.toString()] = s.count;
     });
 
+    // Get follow/friend status for each post's user using shared utility
+    const postUserIds = posts.map((p: any) => p.user?._id?.toString()).filter(Boolean);
+    const followStatusMap = await getFollowStatusMap(userId, postUserIds);
+
     const postsWithPollStats = posts.map(post => {
       // Convert _id to postId for all posts
       const { _id, ...rest } = post;
@@ -250,6 +309,8 @@ export async function GET(req: NextRequest) {
       const userLike = likeResults[_id.toString()]?.userLike || false;
       // Add isLoggedInUser flag
       const isLoggedInUser = basePost.user && basePost.user._id && basePost.user._id.toString() === userId;
+      // Add follow/friend status code
+      const followStatusCode = basePost.user && basePost.user._id ? followStatusMap[basePost.user._id.toString()] ?? 0 : 0;
       if ((post.type === 'poll' || post.type === 'quiz') && Array.isArray(post.options)) {
         const postVotes = votes.filter((v: any) => v.post.toString() === post._id.toString());
         const totalVotes = postVotes.length;
@@ -266,9 +327,9 @@ export async function GET(req: NextRequest) {
             : 0
         }));
         // Remove original options from response, send as 'options' key
-        return { ...basePost, totalVotes, options: pollResults, commentCount, likeCount, shareCount, userLike, isLoggedInUser };
+        return { ...basePost, totalVotes, options: pollResults, commentCount, likeCount, shareCount, userLike, isLoggedInUser, followStatusCode };
       }
-      return { ...basePost, commentCount, likeCount, shareCount, userLike, isLoggedInUser };
+      return { ...basePost, commentCount, likeCount, shareCount, userLike, isLoggedInUser, followStatusCode };
     });
     const total = await Post.countDocuments(filter);
     let trending = [];

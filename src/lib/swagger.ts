@@ -134,7 +134,10 @@ const swaggerDefinition = {
 
 const options = {
   swaggerDefinition,
-  apis: [process.cwd() + '/src/app/api/**/*.ts'], // Use absolute path for Vercel compatibility
+  apis: [
+  process.cwd() + '/src/app/api/**/route.ts',
+  process.cwd() + '/app/api/**/route.ts',
+],
 };
 
 const swaggerSpec = swaggerJSDoc(options);

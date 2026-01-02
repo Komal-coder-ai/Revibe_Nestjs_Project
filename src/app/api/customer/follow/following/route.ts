@@ -60,23 +60,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB  from '@/lib/db';
 import Follow from '@/models/Follow';
 import mongoose from 'mongoose';
+import { getFollowStatusMap } from '@/common/getFollowStatusMap';
 
 // GET /api/follow/following?userId=...&page=1&pageSize=20
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
+    const userId = searchParams.get('userId'); // logged-in user
+    const targetId = searchParams.get('targetId'); // whose following list to fetch
     const page = parseInt(searchParams.get('page') || '1', 10);
     const pageSize = parseInt(searchParams.get('pageSize') || '20', 10);
     const search = searchParams.get('search')?.trim() || '';
-    if (!userId) return NextResponse.json({ data: { status: false, message: 'userId required' } }, { status: 400 });
-    if (!/^[a-fA-F0-9]{24}$/.test(userId)) {
-      return NextResponse.json({ data: { status: false, message: 'Invalid userId format' } }, { status: 400 });
+    if (!userId || !targetId) return NextResponse.json({ data: { status: false, message: 'userId and targetId required' } }, { status: 400 });
+    if (!/^[a-fA-F0-9]{24}$/.test(targetId)) {
+      return NextResponse.json({ data: { status: false, message: 'Invalid targetId format' } }, { status: 400 });
     }
     try {
       const matchStage = {
-        follower: new mongoose.Types.ObjectId(userId),
+        follower: new mongoose.Types.ObjectId(targetId),
         status: 'accepted',
         isDeleted: false
       };
@@ -120,23 +122,12 @@ export async function GET(req: NextRequest) {
         }
       ]);
 
-      // Add followStatus for each user in the list
+      // Add followStatusCode for each user in the list (from logged-in user to each following)
       const followingUserIds = following.map(f => f.userId?.toString?.() ?? f.userId);
-      const followDocs = await Follow.find({
-        follower: userId,
-        following: { $in: followingUserIds },
-        isDeleted: false
-      }).select('following status');
-      const statusMap = new Map();
-      for (const doc of followDocs) {
-        const id = doc.following.toString();
-        if (doc.status === 'accepted') statusMap.set(id, 1);
-        else if (doc.status === 'pending') statusMap.set(id, 3);
-        else if (doc.status === 'rejected') statusMap.set(id, 4);
-      }
+      const followStatusMap = await getFollowStatusMap(userId, followingUserIds);
       for (const f of following) {
         const id = f.userId?.toString?.() ?? f.userId;
-        f.followStatus = statusMap.get(id) || 2;
+        f.followStatusCode = followStatusMap[id] ?? 0;
       }
       // For total, apply the same search filter
       const totalAgg = await Follow.aggregate([

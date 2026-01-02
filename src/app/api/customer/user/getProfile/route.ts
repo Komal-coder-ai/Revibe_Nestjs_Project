@@ -79,10 +79,9 @@
  */
 
 import { NextResponse } from 'next/server';
-// import { verifyAccessToken } from '../../../../lib/jwt';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
-import { is } from 'zod/locales';
+import { getSingleFollowStatus } from '@/common/getFollowStatusMap';
 
 // GET /api/user/get-profile?userId=...&targetUserId=...
 export async function GET(req: Request) {
@@ -134,6 +133,7 @@ export async function GET(req: Request) {
       };
     } else {
       // Return public profile for others
+      const followStatusCode = await getSingleFollowStatus(userId, targetUserId);
       profile = {
         userId: raw._id?.toString?.() ?? raw._id,
         username: raw.username || '',
@@ -144,7 +144,8 @@ export async function GET(req: Request) {
         isLoggedInUser: false,
         followers,
         followings,
-        postCount
+        postCount,
+        followStatusCode
       };
     }
     return NextResponse.json({ data: { status: true, message: 'Profile fetched', user: profile } });

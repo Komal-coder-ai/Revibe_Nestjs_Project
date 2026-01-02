@@ -54,6 +54,7 @@ import Post from '@/models/Post';
 import User from '@/models/User';
 import Comment from '@/models/Comment';
 import Like from '@/models/Like';
+import { getSingleFollowStatus } from '@/common/getFollowStatusMap';
 export async function GET(request: NextRequest) {
     await connectDB();
     try {
@@ -109,31 +110,37 @@ export async function GET(request: NextRequest) {
         // Get share count for this post
         const Share = (await import('@/models/Share')).default;
         const shareCount = await Share.countDocuments({ postId: post._id,type:'share' });
-        // Add isLoggedInUser key as in post list API
-        const isLoggedInUser = userObj && userObj._id && userId && userObj._id.toString() === userId;
-        // Build response object to match post list (without comments array)
-        const responsePost = {
-            postId: post._id,
-            user: userObj,
-            taggedUsers,
-            type: post.type,
-            media: post.media,
-            text: post.text,
-            caption: post.caption,
-            location: post.location,
-            hashtags: post.hashtags,
-            options,
-            correctOption: post.correctOption,
-            createdAt: post.createdAt,
-            updatedAt: post.updatedAt,
-            commentCount,
-            likeCount,
-            shareCount,
-            userLike,
-            totalVotes,
-            isLoggedInUser
-        };
-        return NextResponse.json({ data: { status: true, post: responsePost } });
+                // Add isLoggedInUser key as in post list API
+                const isLoggedInUser = userObj && userObj._id && userId && userObj._id.toString() === userId;
+                // Add followStatusCode
+                let followStatusCode = 0;
+                if (userObj && userObj._id && userId) {
+                    followStatusCode = await getSingleFollowStatus(userId, userObj._id.toString());
+                }
+                // Build response object to match post list (without comments array)
+                const responsePost = {
+                        postId: post._id,
+                        user: userObj,
+                        taggedUsers,
+                        type: post.type,
+                        media: post.media,
+                        text: post.text,
+                        caption: post.caption,
+                        location: post.location,
+                        hashtags: post.hashtags,
+                        options,
+                        correctOption: post.correctOption,
+                        createdAt: post.createdAt,
+                        updatedAt: post.updatedAt,
+                        commentCount,
+                        likeCount,
+                        shareCount,
+                        userLike,
+                        totalVotes,
+                        isLoggedInUser,
+                        followStatusCode
+                };
+                return NextResponse.json({ data: { status: true, post: responsePost } });
     } catch (error: any) {
         console.error(error);
         return NextResponse.json({ data: { status: false, message: error.message } }, { status: 500 });

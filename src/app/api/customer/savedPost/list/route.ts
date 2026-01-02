@@ -101,6 +101,7 @@ import Comment from '@/models/Comment';
 import Vote from '@/models/Vote';
 import Like from '@/models/Like';
 import Follow from '@/models/Follow';
+import { getFollowStatusMap } from '@/common/getFollowStatusMap';
 
 
 // Separate API for saved post list (GET)
@@ -208,6 +209,10 @@ export async function GET(req: NextRequest) {
         const shareCounts: Record<string, number> = {};
         shareCountsArr.forEach((s: any) => { shareCounts[s._id.toString()] = s.count; });
 
+        // Add followStatusCode for each post's user
+        const postUserIds = posts.map((p: any) => p.user?._id?.toString()).filter(Boolean);
+        const followStatusMap = await getFollowStatusMap(userId, postUserIds);
+
         // Compose response like post list API
         const postsWithStats = posts.map((post: any) => {
             const { _id, ...rest } = post;
@@ -219,6 +224,10 @@ export async function GET(req: NextRequest) {
                 basePost.user.followersCount = followersCountMap[basePost.user._id.toString()] || 0;
             }
             const userLike = likeResults[_id.toString()]?.userLike || false;
+            // Add followStatusCode
+            const followStatusCode = basePost.user && basePost.user._id ? followStatusMap[basePost.user._id.toString()] ?? 0 : 0;
+            // Add isLoggedInUser
+            const isLoggedInUser = basePost.user && basePost.user._id && basePost.user._id.toString() === userId;
             if ((post.type === 'poll' || post.type === 'quiz') && Array.isArray(post.options)) {
                 const postVotes = votes.filter((v: any) => v.post.toString() === post._id.toString());
                 const totalVotes = postVotes.length;
@@ -232,9 +241,9 @@ export async function GET(req: NextRequest) {
                         ? Math.round((optionCounts[idx] / totalVotes) * 100)
                         : 0
                 }));
-                return { ...basePost, totalVotes, options: pollResults, commentCount, likeCount, shareCount, userLike };
+                return { ...basePost, totalVotes, options: pollResults, commentCount, likeCount, shareCount, userLike, followStatusCode, shareCount, isLoggedInUser };
             }
-            return { ...basePost, commentCount, likeCount, shareCount, userLike };
+            return { ...basePost, commentCount, likeCount, shareCount, userLike, followStatusCode, shareCount, isLoggedInUser };
         });
         // Get total count for pagination
         const total = await SavedPost.countDocuments({ userId: new mongoose.Types.ObjectId(userId), isDeleted: false });
