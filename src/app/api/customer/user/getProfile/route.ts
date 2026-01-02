@@ -118,6 +118,7 @@ export async function GET(req: Request) {
         countryCode: raw.countryCode || '',
         mobile: raw.mobile || '',
         aadhar: raw.aadhar || '',
+        aadharName: raw.aadharName || '',
         username: raw.username || '',
         name: raw.name || '',
         email: raw.email || '',

@@ -6,6 +6,7 @@ const UserSchema = new Schema(
     mobile: { type: String, index: true },
     aadhar: { type: String, default: '', index: true },
     name: { type: String, default: '' },
+    aadharName: { type: String, default: '' },
     username: { type: String, default: '' },
     email: { type: String, default: '' },
     bio: { type: String, default: '' },

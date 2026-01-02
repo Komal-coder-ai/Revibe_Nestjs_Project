@@ -74,8 +74,11 @@ export async function POST(req: Request) {
           }
         }, { status: 400 });
     }
+    let aadharName = "rajesh singh";
+    const user = await User.findByIdAndUpdate(userId,
+      { aadhar, aadharName },
+      { new: true });
 
-    const user = await User.findByIdAndUpdate(userId, { aadhar }, { new: true });
     if (!user) return NextResponse.json(
       {
         data:
@@ -96,6 +99,7 @@ export async function POST(req: Request) {
         aadharEntered,
         profileCompleted,
         aadharNo: user.aadhar,
+        aadharName: aadharName,
         name: user.name
       }
     });
