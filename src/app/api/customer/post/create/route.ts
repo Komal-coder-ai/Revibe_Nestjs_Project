@@ -128,6 +128,7 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB();
     const body = await req.json();
+    console.log('Received create post request:', body);
     const parse = createPostSchema.safeParse(body);
     if (!parse.success) {
       return NextResponse.json({ data: { status: false, message: 'Validation error', errors: parse.error.issues } }, { status: 400 });
