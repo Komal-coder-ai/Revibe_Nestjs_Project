@@ -20,11 +20,19 @@
  *           type: string
  *           example: "65a1234567890abcdef12345"
  *       - in: query
- *         name: page
+ *         name: cursor
  *         required: false
  *         schema:
- *           type: integer
- *           example: 1
+ *           type: string
+ *           example: "2024-12-31T23:59:59.999Z"
+ *         description: "The createdAt value of the last comment from the previous page. Used for cursor-based pagination. Must be used together with cursorId."
+ *       - in: query
+ *         name: cursorId
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: "65a1234567890abcdef12345"
+ *         description: "The commentId (or _id) of the last comment from the previous page. Used for cursor-based pagination. Must be used together with cursor."
  *       - in: query
  *         name: limit
  *         required: false
@@ -49,12 +57,22 @@
  *                   type: array
  *                   items:
  *                     type: object
- *                 total:
- *                   type: integer
- *                 page:
- *                   type: integer
- *                 limit:
- *                   type: integer
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     limit:
+ *                       type: integer
+ *                     nextCursor:
+ *                       type: string
+ *                       format: date-time
+ *                       nullable: true
+ *                       example: "2024-12-31T23:59:59.999Z"
+ *                       description: "The createdAt value of the last comment in the current page. Use this as the cursor for the next request."
+ *                     nextCursorId:
+ *                       type: string
+ *                       nullable: true
+ *                       example: "65a1234567890abcdef12345"
+ *                       description: "The commentId (or _id) of the last comment in the current page. Use this as the cursorId for the next request."
  */
 import { z } from 'zod';
 
@@ -94,7 +112,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const postId = searchParams.get('postId');
     const userId = searchParams.get('userId');
-    const page = parseInt(searchParams.get('page') || '1', 10);
+    let cursor = searchParams.get('cursor');
+    let cursorId = searchParams.get('cursorId');
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     if (!postId || postId.length !== 24) {
       return NextResponse.json({
@@ -104,8 +123,19 @@ export async function GET(request: NextRequest) {
         }
       }, { status: 400 });
     }
-    // Fetch all comments for the post
-    const rawComments = await Comment.find({ postId, isDeleted: false }).sort({ createdAt: 1 }).lean();
+    // Build filter for top-level comments
+    let filter: any = { postId, isDeleted: false, parentId: null };
+    // Cursor-based pagination for top-level comments
+    if (cursor && cursorId) {
+      filter.$or = [
+        { createdAt: { $lt: new Date(cursor) } },
+        { createdAt: new Date(cursor), _id: { $lt: mongoose.Types.ObjectId.isValid(cursorId) ? new mongoose.Types.ObjectId(cursorId) : cursorId } }
+      ];
+    } else if (cursor) {
+      filter.createdAt = { $lt: new Date(cursor) };
+    }
+    // Fetch top-level comments with cursor-based pagination
+    const rawComments = await Comment.find(filter).sort({ createdAt: -1, _id: -1 }).limit(limit).lean();
     // Map raw comments to CommentDoc and ensure _id is string
     const allComments: CommentDoc[] = rawComments.map((c: any) => ({
       commentId: c._id?.toString?.() ?? String(c._id),
@@ -158,37 +188,49 @@ export async function GET(request: NextRequest) {
     // Attach user info and commentLike to each comment
     allComments.forEach((c) => {
       c.userProfile = userMap[c.userId.toString()] || null;
-      // Debug: Log mapping for likeCount assignment
       const commentIdStr = c.commentId.toString();
       const count = likeCounts[commentIdStr] || 0;
-      console.log(`DEBUG: Assigning likeCount for commentId ${commentIdStr}:`, count);
       c.likeCount = count;
       (c as any).commentLike = userLikesMap[commentIdStr] || false;
     });
-    // Build a map of comments by _id
-    const commentMap: Record<string, CommentDoc> = {};
-    allComments.forEach((c) => { commentMap[c.commentId] = c; });
-    // Build tree: attach each comment to its parent
-    const roots: CommentDoc[] = [];
-    allComments.forEach((c) => {
-      if (c.parentId) {
-        const parent = commentMap[c.parentId.toString()];
-        if (parent) parent.replies!.push(c);
-      } else {
-        roots.push(c);
-      }
+    // For each top-level comment, fetch its replies (not paginated)
+    const topLevelIds = allComments.map(c => c.commentId);
+    const repliesRaw = await Comment.find({ postId, isDeleted: false, parentId: { $in: topLevelIds.map(id => new mongoose.Types.ObjectId(id)) } }).sort({ createdAt: 1 }).lean();
+    const repliesMap: Record<string, CommentDoc[]> = {};
+    repliesRaw.forEach((c: any) => {
+      const reply: CommentDoc = {
+        commentId: c._id?.toString?.() ?? String(c._id),
+        postId: c.postId,
+        userId: c.userId,
+        content: c.content,
+        mentions: c.mentions ?? [],
+        parentId: c.parentId,
+        isDeleted: c.isDeleted,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+        userProfile: userMap[c.userId.toString()] || null,
+        replies: [],
+        likeCount: likeCounts[c._id.toString()] || 0
+      };
+      if (!repliesMap[c.parentId.toString()]) repliesMap[c.parentId.toString()] = [];
+      repliesMap[c.parentId.toString()].push(reply);
     });
-    // Pagination for top-level comments
-    const total = roots.length;
-    const pagedRoots = roots.slice((page - 1) * limit, page * limit);
+    allComments.forEach((c) => {
+      c.replies = repliesMap[c.commentId] || [];
+    });
+    // Prepare pagination info
+    const nextCursor = allComments.length ? allComments[allComments.length - 1].createdAt : null;
+    const nextCursorId = allComments.length ? allComments[allComments.length - 1].commentId : null;
     return NextResponse.json({
       data: {
         status: true,
         message: 'Comments fetched',
-        comments: pagedRoots,
-        total,
-        page,
-        limit
+        comments: allComments,
+        pagination: {
+          limit,
+          nextCursor,
+          nextCursorId
+        }
       }
     });
   } catch (error: any) {

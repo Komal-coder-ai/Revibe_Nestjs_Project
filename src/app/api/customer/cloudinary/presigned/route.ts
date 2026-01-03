@@ -16,6 +16,7 @@
  *               type:
  *                 type: string
  *                 description: The type of file/folder to upload to (numeric string expected)
+ *                 default: '1'
  *     responses:
  *       200:
  *         description: Presigned parameters returned
@@ -48,7 +49,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 // Update the import path to a relative path based on your project structure
-import { getFolderLocation } from '../../../../../common/common';
+import { getCloudinaryFolder } from './cloudinaryFolders';
 import { v2 as cloudinary } from 'cloudinary';
 export async function POST(request: NextRequest) {
   try {
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const folder = getFolderLocation(Number(type));
+    const folder = getCloudinaryFolder(Number(type));
     const timestamp = Math.round(Date.now() / 1000);
 
     const signature = cloudinary.utils.api_sign_request(
@@ -73,8 +74,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       status: true,
       data: {
-        url: `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_NAME}/auto/upload`,
         apiKey: process.env.CLOUDINARY_API_KEY,
+        cloudName: process.env.CLOUDINARY_CLOUD_NAME,
         timestamp,
         signature,
         folder,

@@ -49,100 +49,55 @@
  *                   type: boolean
  */
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB  from '@/lib/db';
+import connectDB from '@/lib/db';
 import Post from '@/models/Post';
 import User from '@/models/User';
-import Comment from '@/models/Comment';
-import Like from '@/models/Like';
-import { getSingleFollowStatus } from '@/common/getFollowStatusMap';
+import { processPostsWithStats } from '@/common/processPostsWithStats';
 export async function GET(request: NextRequest) {
     await connectDB();
     try {
         const { searchParams } = new URL(request.url);
         const postId = searchParams.get('postId');
-        const userId = searchParams.get('userId');
+        let userId = searchParams.get('userId');
         if (!postId || postId.length !== 24) {
             return NextResponse.json({ data: { status: false, message: 'Invalid postId' } }, { status: 400 });
         }
-        const post = await Post.findById(postId).lean() as any;
-        if (!post || post.isDeleted) {
+        const post = await Post.findById(postId).lean();
+        if (!post || Array.isArray(post) || (post as any).isDeleted) {
             return NextResponse.json({ data: { status: false, message: 'Post not found' } }, { status: 404 });
         }
-        // Populate user info
-        const user = await User.findById(post.user).lean() as any;
-        const userObj = user ? {
-            _id: user._id,
-            name: user.name,
-            username: user.username,
-            profileImage: user.profileImage || []
+        // Populate user and taggedUsers fields to match list API aggregation
+        let user = null;
+        if ((post as any).user) {
+            user = await User.findById((post as any).user).lean();
+            if (Array.isArray(user)) {
+                user = user.length > 0 ? user[0] : null;
+            }
+        }
+        (post as any).user = user ? {
+            _id: (user as any)._id,
+            name: (user as any).name,
+            username: (user as any).username,
+            profileImage: (user as any).profileImage || []
         } : null;
-        // Populate tagged users
-        let taggedUsers: any[] = [];
-        if (Array.isArray(post.taggedUsers) && post.taggedUsers.length > 0) {
-            const tagged = await User.find({ _id: { $in: post.taggedUsers } }).lean();
-            taggedUsers = tagged.map(u => ({
+        if (Array.isArray((post as any).taggedUsers) && (post as any).taggedUsers.length > 0) {
+            const tagged = await User.find({ _id: { $in: (post as any).taggedUsers } }).lean();
+            (post as any).taggedUsers = tagged.map((u: any) => ({
                 _id: u._id,
                 name: u.name,
                 username: u.username,
                 profileImage: u.profileImage || []
             }));
+        } else {
+            (post as any).taggedUsers = [];
         }
-        // Get comment count for this post
-        const commentCount = await Comment.countDocuments({ postId, isDeleted: false });
-        // Get like count for this post
-        const likeCount = await Like.countDocuments({ targetId: post._id, targetType: 'post', isDeleted: false });
-        // Get userLike status
-        let userLike = false;
-        if (userId) {
-            const like = await Like.findOne({ targetId: post._id, targetType: 'post', user: userId, isDeleted: false });
-            userLike = !!like;
-        }
-        // Format poll/quiz options and totalVotes if needed
-        let options = post.options;
-        let totalVotes = undefined;
-        if ((post.type === 'poll' || post.type === 'quiz') && Array.isArray(post.options)) {
-            // Aggregate votes for poll/quiz
-            const Vote = (await import('@/models/Vote')).default;
-            const votes = await Vote.find({ post: post._id });
-            totalVotes = votes.length;
-        }
-        // No need to fetch or return comments list in post detail API
-        // Get share count for this post
-        const Share = (await import('@/models/Share')).default;
-        const shareCount = await Share.countDocuments({ postId: post._id,type:'share' });
-                // Add isLoggedInUser key as in post list API
-                const isLoggedInUser = userObj && userObj._id && userId && userObj._id.toString() === userId;
-                // Add followStatusCode
-                let followStatusCode = 0;
-                if (userObj && userObj._id && userId) {
-                    followStatusCode = await getSingleFollowStatus(userId, userObj._id.toString());
-                }
-                // Build response object to match post list (without comments array)
-                const responsePost = {
-                        postId: post._id,
-                        user: userObj,
-                        taggedUsers,
-                        type: post.type,
-                        media: post.media,
-                        text: post.text,
-                        caption: post.caption,
-                        location: post.location,
-                        hashtags: post.hashtags,
-                        options,
-                        correctOption: post.correctOption,
-                        createdAt: post.createdAt,
-                        updatedAt: post.updatedAt,
-                        commentCount,
-                        likeCount,
-                        shareCount,
-                        userLike,
-                        totalVotes,
-                        isLoggedInUser,
-                        followStatusCode
-                };
-                return NextResponse.json({ data: { status: true, post: responsePost } });
+        // Use processPostsWithStats for a single post
+        if (!userId) userId = '';
+        const [responsePost] = await processPostsWithStats([post], userId);
+        return NextResponse.json({ data: { status: true, post: responsePost } });
     } catch (error: any) {
         console.error(error);
-        return NextResponse.json({ data: { status: false, message: error.message } }, { status: 500 });
+        return NextResponse.json({ data: { status: false, message: error.message } },
+            { status: 500 });
     }
 }
