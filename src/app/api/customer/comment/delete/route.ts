@@ -16,6 +16,9 @@
  *               commentId:
  *                 type: string
  *                 example: "65a1234567890abcdef12345"
+ *               userId:
+ *                 type: string
+ *                 example: "65a1234567890abcdef67890"
  *     responses:
  *       200:
  *         description: Comment deleted successfully
@@ -40,18 +43,26 @@ export async function POST(request: NextRequest) {
   await connectDB();
   try {
     const body = await request.json();
-    const parsed = commentIdSchema.safeParse(body);
-    if (!parsed.success) {
+    const { commentId, userId } = body;
+    if (!commentId || !userId) {
       return NextResponse.json({
         data: {
           status: false,
-          message: 'Validation error',
-          errors: parsed.error.issues
+          message: 'commentId and userId are required'
         }
       }, { status: 400 });
     }
-    const { commentId } = parsed.data;
-    const comment = await Comment.findByIdAndUpdate(commentId, { isDeleted: true }, { new: true });
+    // Validate userId and commentId format
+    if (!/^[a-fA-F0-9]{24}$/.test(commentId) || !/^[a-fA-F0-9]{24}$/.test(userId)) {
+      return NextResponse.json({
+        data: {
+          status: false,
+          message: 'Invalid commentId or userId format'
+        }
+      }, { status: 400 });
+    }
+    // Find the comment and check ownership
+    const comment = await Comment.findOne({ _id: commentId, isDeleted: false });
     if (!comment) {
       return NextResponse.json({
         data: {
@@ -60,6 +71,16 @@ export async function POST(request: NextRequest) {
         }
       }, { status: 404 });
     }
+    if (comment.userId.toString() !== userId) {
+      return NextResponse.json({
+        data: {
+          status: false,
+          message: 'You are not authorized to delete this comment'
+        }
+      }, { status: 403 });
+    }
+    comment.isDeleted = true;
+    await comment.save();
     return NextResponse.json({
       data: {
         status: true,

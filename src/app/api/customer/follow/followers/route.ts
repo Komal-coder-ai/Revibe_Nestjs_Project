@@ -20,16 +20,25 @@
  *           type: string
  *           example: "65a1234567890abcdef67890"
  *       - in: query
- *         name: page
+ *         name: cursor
  *         required: false
  *         schema:
- *           type: integer
- *           example: 1
+ *           type: string
+ *           example: "2024-12-31T23:59:59.999Z"
+ *         description: The createdAt value of the last follower from the previous page. Used for cursor-based pagination. Must be used together with cursorId.
  *       - in: query
- *         name: pageSize
+ *         name: cursorId
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: "65a1234567890abcdef12345"
+ *         description: The followerId (or _id) of the last follower from the previous page. Used for cursor-based pagination. Must be used together with cursor.
+ *       - in: query
+ *         name: limit
  *         required: false
  *         schema:
  *           type: integer
+ *           default: 20
  *           example: 20
  *       - in: query
  *         name: search
@@ -64,21 +73,22 @@
  */
 
 // Followers list API with pagination
+
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Follow from '@/models/Follow';
-import mongoose from 'mongoose';
+import mongoose, { PipelineStage } from 'mongoose';
 import { getFollowStatusMap } from '@/common/getFollowStatusMap';
 
 export async function GET(req: NextRequest) {
     try {
-        // JWT and authorization header removed: public access
         await connectDB();
         const { searchParams } = new URL(req.url);
         const userId = searchParams.get('userId'); // logged-in user
         const targetId = searchParams.get('targetId'); // whose followers to fetch
-        const page = parseInt(searchParams.get('page') || '1', 10);
-        const pageSize = parseInt(searchParams.get('pageSize') || '20', 10);
+        const cursor = searchParams.get('cursor');
+        const cursorId = searchParams.get('cursorId');
+        const limit = parseInt(searchParams.get('limit') || '20', 10);
         const search = searchParams.get('search')?.trim() || '';
 
         if (!userId || !targetId) return NextResponse.json({
@@ -96,9 +106,29 @@ export async function GET(req: NextRequest) {
         const searchStage = search
             ? [{ $match: { 'followerUser.username': { $regex: search, $options: 'i' } } }]
             : [];
+
+        // Cursor-based pagination logic
+        let cursorFilter: PipelineStage[] = [];
+        if (cursor && cursorId) {
+            cursorFilter = [
+                {
+                    $match: {
+                        $or: [
+                            { createdAt: { $lt: new Date(cursor) } },
+                            {
+                                createdAt: { $eq: new Date(cursor) },
+                                _id: { $lt: new mongoose.Types.ObjectId(cursorId) }
+                            }
+                        ]
+                    }
+                }
+            ];
+        }
+
         const followers = await Follow.aggregate([
             { $match: matchStage },
-            { $sort: { createdAt: -1 } },
+            ...cursorFilter,
+            { $sort: { createdAt: -1, _id: -1 } },
             {
                 $lookup: {
                     from: 'users',
@@ -109,8 +139,7 @@ export async function GET(req: NextRequest) {
             },
             { $unwind: { path: '$followerUser', preserveNullAndEmptyArrays: true } },
             ...searchStage,
-            { $skip: (page - 1) * pageSize },
-            { $limit: pageSize },
+            { $limit: limit },
             // Add followersCount for each followerUser
             {
                 $lookup: {
@@ -136,6 +165,8 @@ export async function GET(req: NextRequest) {
                     name: '$followerUser.name',
                     profileImage: '$followerUser.profileImage',
                     followersCount: 1,
+                    createdAt: 1,
+                    followerId: '$_id'
                 }
             }
         ]);
@@ -148,35 +179,30 @@ export async function GET(req: NextRequest) {
             f.followStatusCode = followStatusMap[id] ?? 0;
         }
 
-        // For total, apply the same search filter
-        const totalAgg = await Follow.aggregate([
-            { $match: matchStage },
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'follower',
-                    foreignField: '_id',
-                    as: 'followerUser'
-                }
-            },
-            { $unwind: { path: '$followerUser', preserveNullAndEmptyArrays: true } },
-            ...searchStage,
-            { $count: 'total' }
-        ]);
-        const total = totalAgg[0]?.total || 0;
+        // Prepare next cursor
+        let nextCursor = null;
+        let nextCursorId = null;
+        if (followers.length === limit) {
+            const last = followers[followers.length - 1];
+            nextCursor = last.createdAt;
+            nextCursorId = last.followerId;
+        }
+
         return NextResponse.json(
             {
                 data:
                 {
                     status: true,
                     message: 'Followers fetched',
-                    followers, total, page, pageSize
+                    followers,
+                    nextCursor,
+                    nextCursorId,
+                    limit
                 }
             });
     } catch (error) {
         console.log('Error in fetching followers:', error);
         const message = (error instanceof Error) ? error.message : 'Internal server error';
         return NextResponse.json({ data: { status: false, message } }, { status: 500 });
-
     }
 }
