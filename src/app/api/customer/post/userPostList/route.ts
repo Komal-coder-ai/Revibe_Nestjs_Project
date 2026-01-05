@@ -1,25 +1,30 @@
 /**
  * @openapi
- * /api/customer/savedPost/list:
+ * /api/customer/post/userPostList:
  *   get:
- *     summary: Get list of saved posts
- *     description: Returns a list of posts saved by the user (not soft-deleted).
+ *     summary: Get a user's post list
+ *     description: Returns a paginated list of posts for the specified user (targetId), with stats and cursor-based pagination. Requires userId (the requester) and targetId (whose posts to fetch).
  *     tags:
- *       - SavedPost
+ *       - Post
  *     parameters:
  *       - in: query
  *         name: userId
  *         required: true
  *         schema:
  *           type: string
- *         description: The ID of the user whose saved posts to fetch
+ *         description: The ID of the user making the request (for like/follow info)
  *       - in: query
- *         name: cursorId
+ *         name: targetId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the user whose posts to fetch
+ *       - in: query
+ *         name: type
  *         required: false
  *         schema:
  *           type: string
- *           example: "65a1234567890abcdef12345"
- *         description: The _id of the last saved post from the previous page. For the first page, leave empty.
+ *         description: Filter posts by type (image, video, text, etc.)
  *       - in: query
  *         name: limit
  *         required: false
@@ -28,14 +33,21 @@
  *           default: 10
  *         description: Number of posts per page
  *       - in: query
- *         name: search
+ *         name: cursor
  *         required: false
  *         schema:
  *           type: string
- *         description: Search keyword to filter posts by text, caption, or hashtags
+ *           format: date-time
+ *         description: The createdAt value of the last post from the previous page (for cursor-based pagination)
+ *       - in: query
+ *         name: cursorId
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: The postId (or _id) of the last post from the previous page (for cursor-based pagination)
  *     responses:
  *       200:
- *         description: List of saved posts (same structure as post list API)
+ *         description: Posts fetched successfully
  *         content:
  *           application/json:
  *             schema:
@@ -46,6 +58,10 @@
  *                   properties:
  *                     status:
  *                       type: boolean
+ *                       example: true
+ *                     message:
+ *                       type: string
+ *                       example: Posts fetched
  *                     posts:
  *                       type: array
  *                       items:
@@ -57,11 +73,9 @@
  *                             type: object
  *                           userVoted:
  *                             type: boolean
- *                             description: True if the logged-in user has voted on this poll/quiz post, false otherwise.
  *                           userVoteOption:
  *                             type: integer
  *                             nullable: true
- *                             description: The index of the option the user selected, or null if not voted.
  *                           taggedUsers:
  *                             type: array
  *                             items:
@@ -110,74 +124,84 @@
  *                           followStatusCode:
  *                             type: integer
  *                             description: Follow/friend status code between logged-in user and post's user. 0 = no relation, 1 = pending, 2 = accepted, 3 = rejected, 4 = self.
- *                     nextCursorId:
- *                       type: string
- *                       nullable: true
- *                       example: "65a1234567890abcdef12345"
- *                     limit:
- *                       type: integer
- * */
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         limit:
+ *                           type: integer
+ *                         nextCursor:
+ *                           type: string
+ *                           format: date-time
+ *                           nullable: true
+ *                         nextCursorId:
+ *                           type: string
+ *                           nullable: true
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import mongoose from 'mongoose';
-import SavedPost from '@/models/SavedPost';
 import { getAggregatedPosts } from '@/common/getAggregatedPosts';
 import { processPostsWithStats } from '@/common/processPostsWithStats';
 
-
-// Separate API for saved post list (GET)
 export async function GET(req: NextRequest) {
     try {
         await connectDB();
-        const userId = req.nextUrl.searchParams.get('userId');
-        const cursorId = req.nextUrl.searchParams.get('cursorId');
-        const limit = parseInt(req.nextUrl.searchParams.get('limit') || '10', 10);
+        const { searchParams } = new URL(req.url);
+        // userId: currently logged-in user (for like/feed info), targetId: whose posts to fetch (required)
+        const userId = searchParams.get('userId');
+        const targetId = searchParams.get('targetId');
         if (!userId) {
             return NextResponse.json({ data: { status: false, message: 'userId is required' } }, { status: 400 });
         }
-        // Cursor-based pagination for saved posts
-        const savedFilter: any = { userId: new mongoose.Types.ObjectId(userId), isDeleted: false };
-        if (cursorId) {
-            savedFilter._id = { $lt: cursorId };
+        if (!targetId) {
+            return NextResponse.json({ data: { status: false, message: 'targetId is required' } }, { status: 400 });
         }
-        const savedDocs = await SavedPost.find(savedFilter)
-            .sort({ _id: -1 })
-            .limit(limit);
-        const postIds = savedDocs.map(doc =>
-            typeof doc.postId === 'string' && mongoose.Types.ObjectId.isValid(doc.postId)
-                ? new mongoose.Types.ObjectId(doc.postId)
-                : doc.postId
-        );
-        // Build post match filter
-        let postMatch: any = { _id: { $in: postIds }, isDeleted: false };
-        const search = req.nextUrl.searchParams.get('search');
-        if (search) {
-            const regex = new RegExp(search, 'i');
-            postMatch.$or = [
-                { text: regex },
-                { caption: regex },
-                { hashtags: regex }
+        const limit = parseInt(searchParams.get('limit') || '10', 10);
+        let cursor = searchParams.get('cursor');
+        let cursorId = searchParams.get('cursorId');
+        if (cursor === '' || cursor === 'null' || cursor == null) cursor = null;
+        if (cursorId === '' || cursorId === 'null' || cursorId == null) cursorId = null;
+        const type = searchParams.get('type');
+
+        // Build filter for posts (always use targetId)
+        let filter: any = { isDeleted: false, user: new mongoose.Types.ObjectId(targetId.toString()) };
+        if (type) {
+            filter.type = type;
+        }
+        let sort = 'createdAt';
+        let matchStage = { ...filter };
+        if (cursor && cursorId) {
+            matchStage.$or = [
+                { [sort]: { $lt: new Date(cursor) } },
+                { [sort]: new Date(cursor), _id: { $lt: mongoose.Types.ObjectId.isValid(cursorId) ? new mongoose.Types.ObjectId(cursorId) : cursorId } }
             ];
+        } else if (cursor) {
+            matchStage[sort] = { $lt: new Date(cursor) };
         }
-        // Use shared aggregation utility
-        const posts = await getAggregatedPosts({ match: postMatch, limit });
-        // Use shared post-processing utility for stats, likes, votes, etc.
+
+        const posts = await getAggregatedPosts({
+            match: matchStage,
+            limit,
+            sort: { [sort]: -1 }
+        });
+
         const postsWithStats = await processPostsWithStats(posts, userId);
-        // Prepare nextCursorId
-        let nextCursorId = null;
-        if (savedDocs.length === limit) {
-            nextCursorId = savedDocs[savedDocs.length - 1]._id.toString();
-        }
+
         return NextResponse.json({
             data: {
                 status: true,
+                message: 'Posts fetched',
                 posts: postsWithStats,
-                nextCursorId,
-                limit
+                pagination: {
+                    limit,
+                    nextCursor: postsWithStats.length ? postsWithStats[postsWithStats.length - 1].createdAt : null,
+                    nextCursorId: postsWithStats.length ? postsWithStats[postsWithStats.length - 1].postId || postsWithStats[postsWithStats.length - 1]._id : null
+                }
             }
         });
     } catch (error) {
-        console.error('Error fetching saved posts:', error);
+        console.error('Error listing user posts:', error);
         const message = (error instanceof Error) ? error.message : 'Internal server error';
         return NextResponse.json({ data: { status: false, message } }, { status: 500 });
     }

@@ -5,7 +5,7 @@
  * /api/customer/post/list:
  *   get:
  *     summary: List posts
- *     description: Retrieves a paginated list of posts with filtering, sorting, and feed options.
+ *     description: Retrieves a paginated list of feed posts for the user (following + public accounts), with filtering and cursor-based pagination.
  *     tags:
  *       - Post
  *     parameters:
@@ -15,18 +15,6 @@
  *         schema:
  *           type: string
  *           example: "65a1234567890abcdef12345"
- *       - in: query
- *         name: targetUserId
- *         required: false
- *         schema:
- *           type: string
- *           example: "65a1234567890abcdef67890"
- *       - in: query
- *         name: feed
- *         required: false
- *         schema:
- *           type: boolean
- *           example: true
  *       - in: query
  *         name: cursor
  *         required: false
@@ -42,23 +30,21 @@
  *           example: "65a1234567890abcdef12345"
  *         description: "The postId (or _id) of the last post from the previous page. Used for cursor-based pagination. Must be used together with cursor."
  *       - in: query
- *         name: limit
- *         required: false
- *         schema:
- *           type: integer
- *           example: 10
- *       - in: query
- *         name: sort
- *         required: false
- *         schema:
- *           type: string
- *           example: "createdAt"
- *       - in: query
  *         name: type
  *         required: false
+ *         description: Filter posts by type. Use "all" for all post types, or specify a type (e.g., "video", "image").
  *         schema:
  *           type: string
- *           example: ""
+ *           enum:
+ *             - all
+ *             - video
+ *             - image
+ *             - text
+ *             - carousel
+ *             - poll
+ *             - quiz
+ *             - reel
+ *           default: all
  *       - in: query
  *         name: hashtag
  *         required: false
@@ -67,7 +53,7 @@
  *           example: ""
  *     responses:
  *       200:
- *         description: Posts fetched successfully
+ *         description: Feed posts fetched successfully
  *         content:
  *           application/json:
  *             schema:
@@ -183,79 +169,28 @@ import mongoose from 'mongoose';
 import { processPostsWithStats } from '@/common/processPostsWithStats';
 
 
-// GET /api/post/list?user=...&page=1&limit=10&sort=createdAt
-// GET /api/post/list?feed=true&userId=...&page=1&limit=10&sort=createdAt
-// feed=true returns main feed, userId returns user profile posts, both omitted returns all posts (admin/explore)
+// GET /api/post/list?userId=...&limit=10&sort=createdAt
+// Returns the main feed for the user (following + public posts)
 
 export async function GET(req: NextRequest) {
   try {
-    // Connect to database
     await connectDB();
     const { searchParams } = new URL(req.url);
-    // userId: currently logged-in user (for like/feed info), targetUserId: whose posts to fetch
     const userId = searchParams.get('userId');
-    const targetUserId = searchParams.get('targetUserId');
     if (!userId) {
-      return NextResponse.json({ data: { status: false, message: 'userId is required' } },
-
-        { status: 400 });
+      return NextResponse.json({ data: { status: false, message: 'userId is required' } }, { status: 400 });
     }
-    const feed = searchParams.get('feed') === 'true';
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     let cursor = searchParams.get('cursor');
     let cursorId = searchParams.get('cursorId');
-    // Treat null, empty string, or undefined as not provided
+    const type = searchParams.get('type') || 'all';
     if (cursor === '' || cursor === 'null' || cursor == null) cursor = null;
     if (cursorId === '' || cursorId === 'null' || cursorId == null) cursorId = null;
 
-    // Unified logic for feed and non-feed
-    let posts = [];
-    let trending = [];
-    if (feed) {
-      const { getFeedPosts } = await import('./services/feedService');
-      posts = await getFeedPosts({ userId, cursor: cursor ?? undefined, cursorId: cursorId ?? undefined, limit });
-      trending = await Hashtag.find({}).sort({ count: -1 }).limit(10).select('tag count -_id');
-    } else {
-      let filter: any = { isDeleted: false };
-      const sort = searchParams.get('sort') || 'createdAt';
-      const type = searchParams.get('type');
-      const hashtag = searchParams.get('hashtag');
-      const { getBlockedAndReportedFilters } = await import('./filterBlockedAndReported');
-      const { blockedUserIds, blockedPostIds } = await getBlockedAndReportedFilters(userId);
-      if (blockedUserIds.length > 0) {
-        filter.user = filter.user ? filter.user : { $nin: blockedUserIds.map((id: any) => new mongoose.Types.ObjectId(id.toString())) };
-      }
-      if (blockedPostIds.length > 0) {
-        filter._id = filter._id ? filter._id : { $nin: blockedPostIds.map((id: any) => new mongoose.Types.ObjectId(id.toString())) };
-      }
-      if (targetUserId) {
-        filter.user = new mongoose.Types.ObjectId(targetUserId.toString());
-      }
-      if (type) {
-        filter.type = type;
-      }
-      if (hashtag) {
-        filter.hashtags = hashtag.toLowerCase();
-      }
-      let matchStage = { ...filter };
-      if (cursor && cursorId) {
-        matchStage.$or = [
-          { [sort]: { $lt: new Date(cursor) } },
-          { [sort]: new Date(cursor), _id: { $lt: mongoose.Types.ObjectId.isValid(cursorId) ? new mongoose.Types.ObjectId(cursorId) : cursorId } }
-        ];
-      } else if (cursor) {
-        matchStage[sort] = { $lt: new Date(cursor) };
-      }
-      posts = await getAggregatedPosts({
-        match: matchStage,
-        blockedUserIds,
-        limit,
-        sort: { [sort]: -1 }
-      });
-    }
-
-    // Post-processing (votes, likes, comments, etc.)
-    // All poll/quiz vote info is now handled in processPostsWithStats
+    // Always use feed logic
+    const { getFeedPosts } = await import('./services/feedService');
+    const posts = await getFeedPosts({ userId, cursor: cursor ?? undefined, cursorId: cursorId ?? undefined, limit, type });
+    const trending = await Hashtag.find({}).sort({ count: -1 }).limit(10).select('tag count -_id');
     const postsWithPollStats = await processPostsWithStats(posts, userId);
 
     return NextResponse.json({

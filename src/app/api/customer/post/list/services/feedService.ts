@@ -11,6 +11,7 @@ interface GetFeedPostsParams {
     cursor?: string;
     cursorId?: string;
     limit?: number;
+    type?: string;
 }
 
 /**
@@ -20,7 +21,7 @@ interface GetFeedPostsParams {
  * @param limit - Number of posts to fetch
  * @returns Aggregated posts
  */
-export async function getFeedPosts({ userId, cursor, cursorId, limit = 10 }: GetFeedPostsParams) {
+export async function getFeedPosts({ userId, cursor, cursorId, limit = 10, type }: GetFeedPostsParams) {
     // Get followed user IDs (accepted only)
     const following = await Follow.find({
         user: userId,
@@ -40,6 +41,9 @@ export async function getFeedPosts({ userId, cursor, cursorId, limit = 10 }: Get
         isDeleted: false,
         _id: blockedPostIds.length ? { $nin: blockedPostIds } : { $exists: true },
     };
+    if (type && type !== 'all') {
+        baseMatch.type = type;
+    }
     if (cursor && cursorId) {
         // Use both createdAt and _id for pagination (descending order)
         baseMatch.$or = [

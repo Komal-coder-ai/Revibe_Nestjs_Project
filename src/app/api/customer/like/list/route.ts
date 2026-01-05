@@ -27,11 +27,12 @@
  *           type: string
  *           example: "65a1234567890abcdef67890"
  *       - in: query
- *         name: page
+ *         name: cursorId
  *         required: false
  *         schema:
- *           type: integer
- *           example: 1
+ *           type: string
+ *           example: "65a1234567890abcdef12345"
+ *         description: "The _id of the last like from the previous page. For the first page, leave empty."
  *       - in: query
  *         name: limit
  *         required: false
@@ -63,17 +64,18 @@
  *                   type: array
  *                   items:
  *                     type: object
- *                 total:
- *                   type: integer
- *                 page:
- *                   type: integer
+ *                 nextCursorId:
+ *                   type: string
+ *                   nullable: true
+ *                   example: "65a1234567890abcdef12345"
+ *                   description: "The _id to use as cursorId for the next page. Null if no more data."
  *                 limit:
  *                   type: integer
  *                 userLike:
  *                   type: boolean
  */
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB  from '@/lib/db';
+import connectDB from '@/lib/db';
 
 import Like from '@/models/Like';
 import User from '@/models/User';
@@ -85,16 +87,17 @@ export async function GET(request: NextRequest) {
     const targetId = searchParams.get('targetId');
     const targetType = searchParams.get('targetType');
     const userId = searchParams.get('userId');
-    const page = parseInt(searchParams.get('page') || '1', 10);
+    const cursorId = searchParams.get('cursorId');
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     if (!targetId || !targetType || !['post', 'comment'].includes(targetType)) {
       return NextResponse.json({ data: { status: false, message: 'targetId and valid targetType required' } }, { status: 400 });
     }
-    const filter = { targetId, targetType, isDeleted: false };
-    const total = await Like.countDocuments(filter);
-    const likes = await Like.find(filter)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
+    const filter: any = { targetId, targetType, isDeleted: false };
+    if (cursorId) {
+      filter._id = { $lt: cursorId };
+    }
+    const likes: any[] = await Like.find(filter)
+      .sort({ _id: -1 })
       .limit(limit)
       .lean();
     // Fetch user info for each like
@@ -115,12 +118,16 @@ export async function GET(request: NextRequest) {
       const like = await Like.findOne({ targetId, targetType, user: userId, isDeleted: false });
       userLike = !!like;
     }
+    // Prepare nextCursor
+    let nextCursorId = null;
+    if (likes.length === limit) {
+      nextCursorId = (likes[likes.length - 1] as any)._id.toString();
+    }
     return NextResponse.json({
       data: {
         status: true,
         likes: likesWithUser,
-        total,
-        page,
+        nextCursorId,
         limit,
         userLike
       }
