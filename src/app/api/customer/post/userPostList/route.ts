@@ -166,7 +166,7 @@ export async function GET(req: NextRequest) {
 
         // Build filter for posts (always use targetId)
         let filter: any = { isDeleted: false, user: new mongoose.Types.ObjectId(targetId.toString()) };
-        if (type) {
+        if (type && type !== 'all') {
             filter.type = type;
         }
         let sort = 'createdAt';

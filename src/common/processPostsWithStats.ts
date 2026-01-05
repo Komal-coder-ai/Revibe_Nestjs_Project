@@ -24,7 +24,7 @@ export async function processPostsWithStats(posts: any[], userId: string) {
   // Map of user's vote option for poll/quiz posts
   const userVotesMap: Record<string, any> = {};
   userVotesArr.forEach((v: any) => {
-    userVotesMap[v.post.toString()] = v.option;
+    userVotesMap[v.post.toString()] = v.optionIndex;
   });
 
   const commentCounts: Record<string, number> = {};
@@ -90,7 +90,7 @@ export async function processPostsWithStats(posts: any[], userId: string) {
     // Add userLike status for the current user
     const userLike = likeResults[_id.toString()]?.userLike || false;
     // Add isLoggedInUser flag
-    const isLoggedInUser = basePost.user && basePost.user._id && basePost.user._id.toString() === userId;
+    const isLoggedInUser = basePost.user && basePost.user._id && basePost.user._id.toString() === userId?.toString();
     // Add follow/friend status code
     const followStatusCode = basePost.user && basePost.user._id ? followStatusMap[basePost.user._id.toString()] ?? 0 : 0;
     if ((post.type === 'poll' || post.type === 'quiz') && Array.isArray(post.options)) {

@@ -3,7 +3,7 @@
  * /api/customer/follow/followers:
  *   get:
  *     summary: Get followers list
- *     description: Retrieves a paginated list of followers for a user, with optional search.
+ *     description: Retrieves a paginated list of users who follow the specified user, with optional search.
  *     tags:
  *       - Follow
  *     parameters:
@@ -13,6 +13,12 @@
  *         schema:
  *           type: string
  *           example: "65a1234567890abcdef12345"
+ *       - in: query
+ *         name: targetId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "65a1234567890abcdef67890"
  *       - in: query
  *         name: page
  *         required: false
@@ -56,9 +62,10 @@
  *                 pageSize:
  *                   type: integer
  */
+
 // Followers list API with pagination
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB  from '@/lib/db';
+import connectDB from '@/lib/db';
 import Follow from '@/models/Follow';
 import mongoose from 'mongoose';
 import { getFollowStatusMap } from '@/common/getFollowStatusMap';
