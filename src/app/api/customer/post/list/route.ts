@@ -1,5 +1,5 @@
-// Helper to add computed fields to posts (used for both feed and non-feed)
 
+import { NextRequest, NextResponse } from 'next/server';
 /**
  * @swagger
  * /api/customer/post/list:
@@ -21,14 +21,22 @@
  *         schema:
  *           type: string
  *           example: "2024-12-31T23:59:59.999Z"
- *         description: "The createdAt value of the last post from the previous page. Used for cursor-based pagination. Must be used together with cursorId."
+ *         description: The createdAt value of the last post from the previous page. Used for cursor-based pagination. Must be used together with cursorId.
  *       - in: query
  *         name: cursorId
  *         required: false
  *         schema:
  *           type: string
  *           example: "65a1234567890abcdef12345"
- *         description: "The postId (or _id) of the last post from the previous page. Used for cursor-based pagination. Must be used together with cursor."
+ *         description: The postId (or _id) of the last post from the previous page. Used for cursor-based pagination. Must be used together with cursor.
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Number of posts to return per page (pagination limit).
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           example: 10
  *       - in: query
  *         name: type
  *         required: false
@@ -64,78 +72,13 @@
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: "Posts fetched"
+ *                   example: Posts fetched
  *                 posts:
  *                   type: array
  *                   items:
  *                     type: object
- *                     properties:
- *                       postId:
- *                         type: string
- *                         example: "65a1234567890abcdef12345"
- *                       user:
- *                         type: object
- *                       userVoted:
- *                         type: boolean
- *                         description: "True if the logged-in user has voted on this poll/quiz post, false otherwise. Always present."
- *                         example: false
- *                       userVoteOption:
- *                         type: integer
- *                         nullable: true
- *                         description: "The index of the option the user selected, or null if not voted. Always present."
- *                         example: 2
- *                       taggedUsers:
- *                         type: array
- *                         items:
- *                           type: object
- *                       type:
- *                         type: string
- *                       media:
- *                         type: array
- *                         items:
- *                           type: object
- *                       text:
- *                         type: string
- *                       caption:
- *                         type: string
- *                       location:
- *                         type: string
- *                       hashtags:
- *                         type: array
- *                         items:
- *                           type: string
- *                       options:
- *                         type: array
- *                         items:
- *                           type: object
- *                       correctOption:
- *                         type: integer
- *                       createdAt:
- *                         type: string
- *                         format: date-time
- *                       updatedAt:
- *                         type: string
- *                         format: date-time
- *                       commentCount:
- *                         type: integer
- *                       likeCount:
- *                         type: integer
- *                       shareCount:
- *                         type: integer
- *                       userLike:
- *                         type: boolean
- *                       totalVotes:
- *                         type: integer
- *                         nullable: true
- *                       isLoggedInUser:
- *                         type: boolean
- *                       followStatusCode:
- *                         type: integer
- *                         description: "Follow/friend status code between logged-in user and post's user. 0 = no relation, 1 = pending, 2 = accepted, 3 = rejected, 4 = self."
- *                         example: 2
  *                 trending:
  *                   type: array
- *                   description: Trending hashtags (only present when feed=true)
  *                   items:
  *                     type: object
  *                     properties:
@@ -153,15 +96,11 @@
  *                       format: date-time
  *                       nullable: true
  *                       example: "2024-12-31T23:59:59.999Z"
- *                       description: "The createdAt value of the last post in the current page. Use this as the cursor for the next request."
  *                     nextCursorId:
  *                       type: string
  *                       nullable: true
  *                       example: "65a1234567890abcdef12345"
- *                       description: "The postId (or _id) of the last post in the current page. Use this as the cursorId for the next request."
  */
-
-import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import { getAggregatedPosts } from '@/common/getAggregatedPosts';
 import Hashtag from '@/models/Hashtag';

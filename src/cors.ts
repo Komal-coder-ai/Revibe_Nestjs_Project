@@ -3,13 +3,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const allowedOrigins = [
-    'http://localhost:4000',
-    'http://localhost:3001',
-    'https://5104beb87670.ngrok-free.app',
-  ];
-  const origin = request.headers.get('origin');
-  const allowOrigin = origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  // Allow all origins for testing
+  const allowOrigin = '*';
 
   // Handle CORS preflight
   if (request.method === 'OPTIONS') {
@@ -17,7 +12,8 @@ export function middleware(request: NextRequest) {
     response.headers.set('Access-Control-Allow-Origin', allowOrigin);
     response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    // Credentials cannot be used with wildcard origin
+    response.headers.delete('Access-Control-Allow-Credentials');
     return response;
   }
 
@@ -26,7 +22,7 @@ export function middleware(request: NextRequest) {
   response.headers.set('Access-Control-Allow-Origin', allowOrigin);
   response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
   response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  response.headers.set('Access-Control-Allow-Credentials', 'true');
+  response.headers.delete('Access-Control-Allow-Credentials');
   return response;
 }
 
