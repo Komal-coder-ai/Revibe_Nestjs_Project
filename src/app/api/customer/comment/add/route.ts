@@ -66,7 +66,9 @@ export async function POST(request: NextRequest) {
         }
       }, { status: 400 });
     }
-    const { postId, userId, content, mentions = [], parentId = null } = parsed.data;
+    let { postId, userId, content, mentions = [], parentId = null } = parsed.data;
+    // Normalize parentId: treat empty string or null as null
+    if (!parentId || parentId === "") parentId = null;
 
     // Check if user is demo
     const User = (await import('@/models/User')).default;
