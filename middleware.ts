@@ -6,17 +6,14 @@ export function middleware(request: NextRequest) {
   const allowedOrigins = [
     'http://localhost:3000',
     'https://revibe-nestjs-project.vercel.app',
-    'https://84f4ea7c0305.ngrok-free.app'
+    'https://84f4ea7c0305.ngrok-free.app', '*'
   ];
 
   // Get the request origin
   const requestOrigin = request.headers.get('origin');
 
   // Allow if the origin matches exactly or starts with any allowed origin (for subpaths)
-  let allowOrigin = allowedOrigins[0];
-  if (requestOrigin) {
-    allowOrigin = allowedOrigins.find(origin => requestOrigin === origin || requestOrigin.startsWith(origin)) || allowedOrigins[0];
-  }
+  const allowOrigin = '*';
 
   // Handle CORS preflight
   if (request.method === 'OPTIONS') {
