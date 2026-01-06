@@ -64,7 +64,7 @@ export async function processPostsWithStats(posts: any[], userId: string) {
 
   // Share counts
   const shareCountsArr = await Share.aggregate([
-    { $match: { postId: { $in: postIds }, type: "share" } },
+    { $match: { postId: { $in: postIds }, type: "inAppShare" } },
     { $group: { _id: '$postId', count: { $sum: 1 } } }
   ]);
   const shareCounts: Record<string, number> = {};

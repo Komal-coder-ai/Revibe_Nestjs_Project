@@ -68,14 +68,14 @@ export async function POST(request: NextRequest) {
 
     const signature = cloudinary.utils.api_sign_request(
       { timestamp, folder },
-      process.env.CLOUDINARY_API_SECRET!
+      process.env.CLOUDINARY_SECRET!
     );
 
     return NextResponse.json({
       status: true,
       data: {
-        apiKey: process.env.CLOUDINARY_API_KEY,
-        cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+        apiKey: process.env.CLOUDINARY_KEY,
+        cloudName: process.env.CLOUDINARY_NAME,
         timestamp,
         signature,
         folder,

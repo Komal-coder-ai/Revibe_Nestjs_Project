@@ -1,0 +1,187 @@
+import { NextRequest, NextResponse } from 'next/server';
+import connectDB from '@/lib/db';
+import Tribe from '@/models/Tribe';
+import { createTribeSchema } from '../validator/schema';
+
+/**
+ * @openapi
+ * /api/customer/tribe/create:
+ *   post:
+ *     summary: Create a new tribe
+ *     description: Creates a new tribe (like a Facebook page) with icon, tribeName, description, category, bannerImage (optional), rules (text), and owner. Prevents duplicate tribeName.
+ *     tags:
+ *       - Tribe
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               icon:
+ *                 type: object
+ *                 description: Tribe icon object
+ *                 properties:
+ *                   imageUrl:
+ *                     type: string
+ *                   thumbUrl:
+ *                     type: string
+ *                   type:
+ *                     type: string
+ *                   width:
+ *                     type: string
+ *                   height:
+ *                     type: string
+ *                   orientation:
+ *                     type: string
+ *                   format:
+ *                     type: string
+ *                 example:
+ *                   imageUrl: "https://example.com/icon.jpg"
+ *                   thumbUrl: "https://example.com/icon_thumb.jpg"
+ *                   type: "image"
+ *                   width: "256"
+ *                   height: "256"
+ *                   orientation: "square"
+ *                   format: "jpg"
+ *               tribeName:
+ *                 type: string
+ *                 description: Tribe name
+ *                 example: "Nature Lovers"
+ *               description:
+ *                 type: string
+ *                 description: Tribe description
+ *                 example: "A group for nature enthusiasts."
+ *               category:
+ *                 type: string
+ *                 description: Tribe category
+ *                 example: "Nature"
+ *               bannerImage:
+ *                 type: object
+ *                 description: Tribe banner image object (optional)
+ *                 properties:
+ *                   imageUrl:
+ *                     type: string
+ *                   thumbUrl:
+ *                     type: string
+ *                   type:
+ *                     type: string
+ *                   width:
+ *                     type: string
+ *                   height:
+ *                     type: string
+ *                   orientation:
+ *                     type: string
+ *                   format:
+ *                     type: string
+ *                 example:
+ *                   imageUrl: "https://example.com/banner.jpg"
+ *                   thumbUrl: "https://example.com/banner_thumb.jpg"
+ *                   type: "image"
+ *                   width: "1920"
+ *                   height: "480"
+ *                   orientation: "landscape"
+ *                   format: "jpg"
+ *               rules:
+ *                 type: string
+ *                 description: Rules for the tribe (text)
+ *                 example: "Be respectful. No spam."
+ *               owner:
+ *                 type: string
+ *                 description: User ID of tribe creator
+ *                 example: "65a1234567890abcdef12345"
+ *     responses:
+ *       200:
+ *         description: Tribe created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     status:
+ *                       type: boolean
+ *                       example: true
+ *                     tribe:
+ *                       type: object
+ *                       description: Created tribe object
+ *       400:
+ *         description: Validation error or duplicate tribeName
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     status:
+ *                       type: boolean
+ *                     message:
+ *                       type: string
+ *                     errors:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     status:
+ *                       type: boolean
+ *                     message:
+ *                       type: string
+ */
+
+// Create a new tribe
+export async function POST(req: NextRequest) {
+    await connectDB();
+    const body = await req.json();
+    const parse = createTribeSchema.safeParse(body);
+    if (!parse.success) {
+        return NextResponse.json({
+            data: {
+                status: false,
+                message: 'Validation error',
+                errors: parse.error.issues
+            }
+        }, { status: 400 });
+    }
+    const { icon, tribeName, description, category, bannerImage, rules, owner } = parse.data;
+    // Validate owner id
+    // Check if owner exists in User model
+    const User = (await import('@/models/User')).default;
+    const ownerExists = await User.findById(owner);
+    if (!ownerExists) {
+        return NextResponse.json({ data: { status: false, message: 'Owner user not found' } }, { status: 400 });
+    }
+    try {
+        // Check for existing tribe with the same name
+        const existing = await Tribe.findOne({ tribeName });
+        if (existing) {
+            return NextResponse.json({ data: { status: false, message: 'A tribe with this name already exists.' } }, { status: 400 });
+        }
+        const tribe = await Tribe.create({
+            icon,
+            tribeName,
+            description,
+            category,
+            bannerImage,
+            rules,
+            owner,
+            admins: [owner],
+            isPublic: true,
+        });
+        return NextResponse.json({ data: { status: true, tribe } });
+    } catch (error) {
+        return NextResponse.json({ data: { status: false, message: error instanceof Error ? error.message : 'Error creating tribe' } }, { status: 500 });
+    }
+}
