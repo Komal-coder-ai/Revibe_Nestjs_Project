@@ -107,38 +107,6 @@ import { createTribeSchema } from '../validator/schema';
  *                     tribe:
  *                       type: object
  *                       description: Created tribe object
- *       400:
- *         description: Validation error or duplicate tribeName
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   type: object
- *                   properties:
- *                     status:
- *                       type: boolean
- *                     message:
- *                       type: string
- *                     errors:
- *                       type: array
- *                       items:
- *                         type: object
- *       500:
- *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   type: object
- *                   properties:
- *                     status:
- *                       type: boolean
- *                     message:
- *                       type: string
  */
 
 // Create a new tribe
@@ -177,11 +145,34 @@ export async function POST(req: NextRequest) {
             bannerImage,
             rules,
             owner,
-            admins: [owner],
-            isPublic: true,
         });
-        return NextResponse.json({ data: { status: true, tribe } });
+
+        // Add creator as a member of the tribe
+        const TribeMember = (await import('@/models/TribeMember')).default;
+        await TribeMember.create({
+            userId: owner,
+            tribeId: tribe._id,
+            role: 'owner',
+        });
+
+        // Project only required fields in the response
+        const projectedTribe = {
+            tribeId: tribe._id,
+            tribeName: tribe.tribeName,
+            description: tribe.description,
+            category: tribe.category,
+            icon: tribe.icon,
+            bannerImage: tribe.bannerImage,
+            rules: tribe.rules,
+            owner: tribe.owner,
+            isPublic: tribe.isPublic,
+            createdAt: tribe.createdAt,
+            updatedAt: tribe.updatedAt
+        };
+
+        return NextResponse.json({ data: { status: true, tribe: projectedTribe } });
     } catch (error) {
+        console.error('Error creating tribe:', error);
         return NextResponse.json({ data: { status: false, message: error instanceof Error ? error.message : 'Error creating tribe' } }, { status: 500 });
     }
 }

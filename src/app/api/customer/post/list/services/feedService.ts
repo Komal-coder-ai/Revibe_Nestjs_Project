@@ -40,6 +40,10 @@ export async function getFeedPosts({ userId, cursor, cursorId, limit = 10, type 
     const baseMatch: any = {
         isDeleted: false,
         _id: blockedPostIds.length ? { $nin: blockedPostIds } : { $exists: true },
+        $or: [
+            { tribe: { $exists: false } },
+            { tribe: null }
+        ], // Exclude tribe posts from main feed
     };
     if (type && type !== 'all') {
         baseMatch.type = type;

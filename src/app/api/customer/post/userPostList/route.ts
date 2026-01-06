@@ -165,7 +165,14 @@ export async function GET(req: NextRequest) {
         const type = searchParams.get('type');
 
         // Build filter for posts (always use targetId)
-        let filter: any = { isDeleted: false, user: new mongoose.Types.ObjectId(targetId.toString()) };
+        let filter: any = {
+            isDeleted: false,
+            user: new mongoose.Types.ObjectId(targetId.toString()),
+            $or: [
+                { tribe: { $exists: false } },
+                { tribe: null }
+            ]
+        };
         if (type && type !== 'all') {
             filter.type = type;
         }

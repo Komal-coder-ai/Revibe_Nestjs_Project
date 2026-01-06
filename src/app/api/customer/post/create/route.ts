@@ -17,6 +17,10 @@
  *                 type: string
  *                 example: "65a1234567890abcdef12345"
  *                 default: ""
+ *               tribeId:
+ *                 type: string
+ *                 example: "65a1234567890abcdef99999"
+ *                 description: "Optional. The tribe ID to associate this post with. If not provided, creates a regular post."
  *               type:
  *                 type: string
  *                 example: "image"
@@ -133,9 +137,9 @@ export async function POST(req: NextRequest) {
     if (!parse.success) {
       return NextResponse.json({ data: { status: false, message: 'Validation error', errors: parse.error.issues } }, { status: 400 });
     }
-    const { userId, type, media, text, caption, location, taggedUsers, options, correctOption } = parse.data;
+    const { userId, type, media, text, caption, location, taggedUsers, options, correctOption, tribeId } = parse.data;
     console.log('create post:', parse.data);
-    
+
     const hashtags = extractHashtags((text || '') + ' ' + (caption || ''));
     // Update hashtag counts in Hashtag collection
     if (hashtags.length > 0) {
@@ -177,6 +181,7 @@ export async function POST(req: NextRequest) {
       options: formattedOptions || [],
       correctOption: formattedCorrectOption,
       pollResults: [],
+      tribe: tribeId || undefined,
     });
     return NextResponse.json({ data: { status: true, message: 'Post created', post } });
   } catch (error) {

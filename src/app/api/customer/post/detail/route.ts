@@ -50,54 +50,48 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import Post from '@/models/Post';
-import User from '@/models/User';
+import mongoose from 'mongoose';
 import { processPostsWithStats } from '@/common/processPostsWithStats';
+import { getAggregatedPosts } from '@/common/getAggregatedPosts';
+import { trackPostView } from '@/common/trackPostView';
 export async function GET(request: NextRequest) {
     await connectDB();
     try {
         const { searchParams } = new URL(request.url);
         const postId = searchParams.get('postId');
         let userId = searchParams.get('userId');
+        if (!userId) {
+            return NextResponse.json({ data: { status: false, message: 'userId is required' } }, { status: 400 });
+        }
         if (!postId || postId.length !== 24) {
             return NextResponse.json({ data: { status: false, message: 'Invalid postId' } }, { status: 400 });
         }
-        const post = await Post.findById(postId).lean();
-        if (!post || Array.isArray(post) || (post as any).isDeleted) {
+
+        // Use getAggregatedPosts for post detail, matching list API
+        const posts = await getAggregatedPosts({
+            match: {
+                _id: new mongoose.Types.ObjectId(postId),
+                isDeleted: false
+            }, limit: 1
+        });
+        if (!posts || posts.length === 0) {
             return NextResponse.json({ data: { status: false, message: 'Post not found' } }, { status: 404 });
         }
-        // Populate user and taggedUsers fields to match list API aggregation
-        let user = null;
-        if ((post as any).user) {
-            user = await User.findById((post as any).user).lean();
-            if (Array.isArray(user)) {
-                user = user.length > 0 ? user[0] : null;
-            }
+
+        // Track post view 
+        try {
+            await trackPostView(userId, postId);
+        } catch (e) {
+            // Log but do not block response if view tracking fails
+            console.error('Failed to record post view:', e);
         }
-        (post as any).user = user ? {
-            _id: (user as any)._id,
-            name: (user as any).name,
-            username: (user as any).username,
-            profileImage: (user as any).profileImage || []
-        } : null;
-        if (Array.isArray((post as any).taggedUsers) && (post as any).taggedUsers.length > 0) {
-            const tagged = await User.find({ _id: { $in: (post as any).taggedUsers } }).lean();
-            (post as any).taggedUsers = tagged.map((u: any) => ({
-                _id: u._id,
-                name: u.name,
-                username: u.username,
-                profileImage: u.profileImage || []
-            }));
-        } else {
-            (post as any).taggedUsers = [];
-        }
-        // Use processPostsWithStats for a single post
-        if (!userId) userId = '';
-        const [responsePost] = await processPostsWithStats([post], userId);
+
+        const [responsePost] = await processPostsWithStats(posts, userId);
         return NextResponse.json({ data: { status: true, post: responsePost } });
-    } catch (error: any) {
+    } catch (error) {
         console.error(error);
-        return NextResponse.json({ data: { status: false, message: error.message } },
+        const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+        return NextResponse.json({ data: { status: false, message } },
             { status: 500 });
     }
 }
