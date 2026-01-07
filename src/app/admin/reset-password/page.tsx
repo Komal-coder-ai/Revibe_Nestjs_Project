@@ -1,1 +1,12 @@
-// No implementation. Unused file. All code commented out as per user request.
+import React from 'react';
+
+const ResetPasswordPage = () => {
+  return (
+    <div>
+      <h1>Reset Password</h1>
+      <p>This page is under construction.</p>
+    </div>
+  );
+};
+
+export default ResetPasswordPage;
