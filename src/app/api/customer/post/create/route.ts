@@ -79,6 +79,10 @@
  *                 type: string
  *                 example: "Mumbai, India"
  *                 default: ""
+ *               postType:
+ *                 type: integer
+ *                 example: 1
+ *                 default: 0
  *               taggedUsers:
  *                 type: array
  *                 items:
@@ -125,7 +129,6 @@ import Post from '@/models/Post';
 import { createPostSchema } from '../validator/schemas';
 import { extractHashtags } from '@/lib/hashtag';
 import Hashtag from '@/models/Hashtag';
-import { Data } from '@mux/mux-node/resources.mjs';
 
 // POST /api/post/create - Create a new post
 export async function POST(req: NextRequest) {
@@ -137,7 +140,7 @@ export async function POST(req: NextRequest) {
     if (!parse.success) {
       return NextResponse.json({ data: { status: false, message: 'Validation error', errors: parse.error.issues } }, { status: 400 });
     }
-    const { userId, type, media, text, caption, location, taggedUsers, options, correctOption, tribeId } = parse.data;
+    const { userId, type, media, postType, text, caption, location, taggedUsers, options, correctOption, tribeId } = parse.data;
     console.log('create post:', parse.data);
 
     const hashtags = extractHashtags((text || '') + ' ' + (caption || ''));
@@ -180,6 +183,7 @@ export async function POST(req: NextRequest) {
       taggedUsers: taggedUsers || [],
       options: formattedOptions || [],
       correctOption: formattedCorrectOption,
+      postType: postType,
       pollResults: [],
       tribe: tribeId || undefined,
     });

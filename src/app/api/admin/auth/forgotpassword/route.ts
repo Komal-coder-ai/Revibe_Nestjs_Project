@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import Admin from '@/models/Admin';
 import { sendEmail } from '@/lib/email';
 import crypto from 'crypto';
-import { db } from '@/lib/db';
 import connectDB from '@/lib/db';
 
 export async function POST(req: Request) {

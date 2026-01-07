@@ -21,11 +21,12 @@ export const createPostSchema = z.object({
   userId: z.string().min(1, 'userId is required'),
   tribeId: z.string().optional(),
   type: z.enum(['image', 'video', 'text', 'carousel', 'poll', 'quiz', 'reel']),
+  postType: z.number().min(1, "postType must be at least 1"),
+  // eg:1:normal post,2:tribe post
   media: z.array(mediaObjectSchema).optional(),
   text: z.string().optional(),
   caption: z.string().optional(),
   location: z.string().optional(),
-  hashtags: z.array(z.string()).optional(),
   taggedUsers: z.array(z.string()).optional(),
   // For poll/quiz
   options: z.array(z.object({

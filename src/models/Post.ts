@@ -17,6 +17,7 @@ const PostSchema = new Schema(
     ],
     // For quiz: index of correct answer (optional, for easier access)
     correctOption: { type: Number },
+    postType: { type: Number },
     // ...existing code...  
     media: [
       {
