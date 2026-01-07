@@ -2,8 +2,12 @@ import mongoose, { Schema } from 'mongoose';
 
 const PostSchema = new Schema(
   {
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    type: { type: String, enum: ['image', 'video', 'text', 'carousel', 'poll', 'quiz', 'reel'], required: true },
+    user: { type: Schema.Types.ObjectId, ref: 'User' },
+    tribe: { type: Schema.Types.ObjectId, ref: 'Tribe' },
+    type: {
+      type: String,
+      enum: ['image', 'video', 'text', 'carousel', 'poll', 'quiz', 'reel'],
+    },
     // Poll options (for poll and quiz types)
     options: [
       {
@@ -13,7 +17,7 @@ const PostSchema = new Schema(
     ],
     // For quiz: index of correct answer (optional, for easier access)
     correctOption: { type: Number },
-    // ...existing code...
+    // ...existing code...  
     media: [
       {
         imageUrl: { type: String, default: '' },

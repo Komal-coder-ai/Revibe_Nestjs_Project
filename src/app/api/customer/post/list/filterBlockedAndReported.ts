@@ -1,6 +1,5 @@
 import BlockedUser from '@/models/BlockedUser';
 import Report from '@/models/Report';
-import mongoose from 'mongoose';
 import connectDB from '@/lib/db';
 
 export async function getBlockedAndReportedFilters(userId: string) {

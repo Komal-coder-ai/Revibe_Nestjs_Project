@@ -51,10 +51,32 @@ export async function POST(request: NextRequest) {
     await connectDB();
     const body = await request.json();
     const parse = startOtpSchema.safeParse(body);
-    if (!parse.success) return NextResponse.json({ data: { status: false, message: 'Validation error', errors: parse.error.issues } }, { status: 400 });
+    if (!parse.success) return NextResponse.json(
+      {
+        data: {
+          status: false,
+          message: 'Validation error',
+          errors: parse.error.issues
+        }
+      },
+      { status: 400 });
+
     const { countryCode, mobile } = parse.data;
 
     let user = await User.findOne({ countryCode, mobile });
+
+    if (user && !user.isActive) {
+      return NextResponse.json(
+        {
+          data: {
+            status: false,
+            message: 'User is not active please contact support',
+          }
+        },
+        { status: 403 }
+      );
+    }
+
     if (!user) {
       // Generate 10-digit hexadecimal referral code
       const referralCode = Array.from({ length: 10 }, () => Math.floor(Math.random() * 16).toString(16)).join('').toUpperCase();

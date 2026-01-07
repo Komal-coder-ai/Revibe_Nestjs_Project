@@ -5,7 +5,7 @@
  *     summary: Join a live stream and get viewer details
  *     description: Adds a user to a live stream's viewers and returns viewer count and details.
  *     tags:
- *       - LiveStream
+ *       - Livestream
  *     requestBody:
  *       required: true
  *       content:

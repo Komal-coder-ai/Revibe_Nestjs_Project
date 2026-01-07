@@ -3,12 +3,12 @@ import swaggerJSDoc from 'swagger-jsdoc';
 const swaggerDefinition = {
   openapi: '3.0.0',
   info: {
-    title: 'NewRevibe API Documentation',
+    title: 'Revibe API Documentation',
     version: '1.0.0',
-    description: 'API documentation for NewRevibe admin and customer platform',
+    description: 'API documentation for Revibe admin and customer platform',
     contact: {
       name: 'API Support',
-      email: 'support@newrevibe.com',
+      email: 'support@revibe.com',
     },
   },
   servers: [
@@ -17,7 +17,7 @@ const swaggerDefinition = {
       description: 'Development server',
     },
     {
-      url: 'https://your-production-domain.com',
+      url: 'https://revibe-nestjs-project.vercel.app',
       description: 'Production server',
     },
   ],
@@ -134,7 +134,10 @@ const swaggerDefinition = {
 
 const options = {
   swaggerDefinition,
-  apis: ['./src/app/api/**/*.ts'], // Path to the API routes
+  apis: [
+  process.cwd() + '/src/app/api/**/route.ts',
+  // process.cwd() + '/app/api/**/route.ts',
+],
 };
 
 const swaggerSpec = swaggerJSDoc(options);

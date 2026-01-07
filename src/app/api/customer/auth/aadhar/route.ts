@@ -74,8 +74,11 @@ export async function POST(req: Request) {
           }
         }, { status: 400 });
     }
+    let aadharName = "rajesh singh";
+    const user = await User.findByIdAndUpdate(userId,
+      { aadhar, aadharName },
+      { new: true });
 
-    const user = await User.findByIdAndUpdate(userId, { aadhar }, { new: true });
     if (!user) return NextResponse.json(
       {
         data:
@@ -87,7 +90,7 @@ export async function POST(req: Request) {
 
     // Only return aadharEntered and profileCompleted
     const aadharEntered = Boolean(user.aadhar && user.aadhar.length > 0);
-    const profileCompleted = Boolean(user.username && user.email && user.bio && user.profileImage);
+    const profileCompleted = Boolean(user.username && user.profileImage);
     return NextResponse.json({
       data: {
         status: true,
@@ -96,7 +99,8 @@ export async function POST(req: Request) {
         aadharEntered,
         profileCompleted,
         aadharNo: user.aadhar,
-        name: "Rajesh Kumar"
+        aadharName: aadharName,
+        name: user.name
       }
     });
   } catch (error) {

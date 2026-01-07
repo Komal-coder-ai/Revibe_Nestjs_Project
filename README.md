@@ -1,14 +1,24 @@
-# NewRevibe - Next.js Admin & Customer Platform
 
-A modern Next.js application with MongoDB integration, featuring separate admin and customer login portals.
+# Revibe - Next.js & NestJS Fullstack Platform
 
-## Features
-
-
-# Revibe NestJS & Next.js Project
+A modern, modular full-stack application with:
+- **Next.js 15** (React 19, SSR, App Router)
+- **NestJS-style API** (modular, feature-based)
+- **MongoDB/Mongoose** for data
+- **Tailwind CSS** for UI
+- **Socket.io** for real-time features
+- **Swagger** for API docs
+- **Cloudinary** for media
+- **Zod** for validation, **Zustand** for state, **Sonner** for notifications
 
 ## Overview
-This project is a full-stack application built with Next.js (frontend) and NestJS (backend API). It features an admin dashboard, customer authentication, social features (like, follow, comment), livestreaming, and more. The backend is organized as an API-first architecture, while the frontend uses modern React and Tailwind CSS.
+This project powers a social platform with:
+- Admin dashboard (manage users, products, orders, settings)
+- Customer portal (login, onboarding, feed)
+- Social features: like, comment, follow, share, save, poll, quiz, reels
+- Livestreaming (start, end, chat, like, view)
+- Modular API (admin/customer separation, feature folders)
+- Swagger UI at `/api-docs`
 
 ---
 
@@ -24,33 +34,42 @@ This project is a full-stack application built with Next.js (frontend) and NestJ
 ├── tailwind.config.ts              # Tailwind CSS config
 ├── tsconfig.json                   # TypeScript config
 ├── scripts/                        # Utility scripts (hash passwords, seed DB)
+├── public/                         # Static assets
 ├── src/
-│   ├── app/                        # Next.js app directory
+│   ├── app/
 │   │   ├── globals.css             # Global styles
-│   │   ├── layout.tsx              # Root layout
-│   │   ├── page.tsx                # Main landing page
-│   │   ├── admin/                  # Admin dashboard (UI)
-│   │   ├── api/                    # API routes (NestJS)
-│   │   ├── api-docs/               # Swagger UI for API docs
-│   │   ├── customer/               # Customer login UI
+│   │   ├── layout.tsx, page.tsx    # Root layout & landing
+│   │   ├── admin/                  # Admin dashboard UI
+│   │   │   ├── dashboard/          # Admin dashboard pages
+│   │   │   ├── orders/, products/, users/, settings/ # CRUD UIs
+│   │   │   ├── Feed/, livestream/, login/            # Social & live features
+│   │   │   ├── Assest/, components/                  # UI components
+│   │   │   └── storeAPICall/                        # API store logic (Zustand)
+│   │   ├── api/                    # Modular API (admin/customer)
+│   │   │   ├── admin/              # Admin APIs (feed, login, user, ...)
+│   │   │   ├── customer/           # Customer APIs (auth, post, ...)
+│   │   │   └── swagger/            # Swagger docs route
+│   │   ├── api-docs/               # Swagger UI & custom styles
+│   │   ├── customer/               # Customer login & onboarding
 │   │   └── socket/                 # Socket.io integration
-│   ├── components/                 # Shared React components
-│   ├── lib/                        # Utility libraries (auth, db, cloudinary, etc.)
-│   └── models/                     # Mongoose models (User, Post, Comment, etc.)
+│   ├── common/                     # Shared logic (aggregation, stats)
+│   ├── lib/                        # Utility libraries (auth, db, cloudinary, jwt, mux, ...)
+│   └── models/                     # Mongoose models (User, Post, Comment, Vote, ...)
 └── README.md                       # Project documentation
 ```
 
 ---
 
 ## Key Features
-- **Admin Dashboard**: Manage users, products, orders, and settings
-- **Customer Authentication**: Login, Aadhar verification, profile completion
-- **Social Features**: Like, comment, follow, share, save posts
-- **Livestreaming**: Start, end, chat, like, view livestreams
+- **Admin Dashboard**: Manage users, products, orders, settings
+- **Customer Portal**: Login, onboarding, Aadhar verification
+- **Social Feed**: Like, comment, follow, share, save, poll, quiz, reels
+- **Livestreaming**: Start/end, chat, like, view
 - **API Documentation**: Swagger UI at `/api-docs`
-- **Socket.io**: Real-time features
-- **Cloudinary Integration**: Media upload and delete
-- **Modular Structure**: Organized by feature for scalability
+- **Socket.io**: Real-time notifications & chat
+- **Cloudinary**: Media upload/delete
+- **Modular Structure**: Feature-based folders for scalability
+- **Zod, Zustand, Sonner**: Modern state, validation, notifications
 
 ---
 
@@ -92,31 +111,39 @@ This project is a full-stack application built with Next.js (frontend) and NestJ
 
 ---
 
+
 ## Folder Details
-- **src/app/admin/**: Admin dashboard UI and routes
-- **src/app/api/**: All backend API endpoints (NestJS style)
+- **src/app/admin/**: Admin dashboard UI, CRUD, social, livestream, components, Zustand store
+- **src/app/api/**: Modular API endpoints (admin/customer, feature-based)
 - **src/app/api-docs/**: Swagger UI and custom styles
-- **src/app/customer/**: Customer login and onboarding
+- **src/app/customer/**: Customer login, onboarding
 - **src/app/socket/**: Real-time socket logic
-- **src/components/**: Shared React components
-- **src/lib/**: Utility libraries (auth, db, cloudinary, etc.)
-- **src/models/**: Mongoose models for all entities
+- **src/common/**: Shared logic (aggregation, stats, helpers)
+- **src/lib/**: Utility libraries (auth, db, cloudinary, jwt, mux, ...)
+- **src/models/**: Mongoose models (User, Post, Comment, Vote, ...)
 
 ---
 
+---
+
+
 ## API Endpoints
 - All API routes are under `/api/`
+- Modular: `/api/admin/*` and `/api/customer/*`
 - See Swagger docs at `/api-docs` for full API reference
 
 ---
 
+---
+
+
 ## Technologies Used
-- **Next.js** (React, SSR, API routes)
-- **NestJS** (API structure)
-- **MongoDB** (Mongoose ODM)
-- **Tailwind CSS** (UI styling)
-- **Socket.io** (Real-time communication)
-- **Cloudinary** (Media management)
+- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
+- **Backend**: Modular API (NestJS-style), Swagger, Zod
+- **Database**: MongoDB (Mongoose ODM)
+- **Real-time**: Socket.io
+- **Media**: Cloudinary
+- **State/Validation**: Zustand, Zod, Sonner
 
 ---
 
@@ -137,90 +164,42 @@ This project is a full-stack application built with Next.js (frontend) and NestJ
 ## Contact
 For questions or support, please open an issue or contact the maintainer.
 
-## Project Structure
 
-```
-newRevibe/
-├── src/
-│   ├── app/
-│   │   ├── admin/
-│   │   │   ├── login/          # Admin login page
-│   │   │   └── dashboard/      # Admin dashboard
-│   │   ├── customer/
-│   │   │   └── login/          # Customer login page
-│   │   └── api/
-│   │       ├── admin/
-│   │       │   └── login/      # Admin login API
-│   │       └── customer/
-│   │           └── login/      # Customer login API
-│   ├── lib/
-│   │   └── db.ts              # MongoDB connection
-│   └── models/
-│       ├── Admin.ts           # Admin schema
-│       └── Customer.ts        # Customer schema
-├── scripts/
-│   └── hashPassword.js        # Password hashing utility
-└── .env.local                 # Environment variables
-```
+---
 
 ## Getting Started
 
-### 1. Install Dependencies
+### Prerequisites
+- Node.js (v18+ recommended)
+- MongoDB instance
 
-```bash
-npm install
-```
-
-### 2. Setup MongoDB
-
-Update `.env.local` with your MongoDB connection string:
-
-```env
-MONGODB_URI=mongodb://localhost:27017/newrevibe
-# Or for MongoDB Atlas:
-# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/newrevibe
-```
-
-### 3. Create Admin/Customer Users
-
-Use the password hashing script to generate hashed passwords:
-
-```bash
-node scripts/hashPassword.js your_password
-```
-
-Then insert the admin and customer documents into MongoDB:
-
-**Admin Collection:**
-```json
-{
-  "email": "admin@example.com",
-  "password": "hashed_password_here",
-  "name": "Admin User",
-  "role": "admin"
-}
-```
-
-**Customer Collection:**
-```json
-{
-  "email": "customer@example.com",
-  "password": "hashed_password_here",
-  "name": "Customer User",
-  "phone": "1234567890",
-  "address": "123 Main St"
-}
-```
-
-### 4. Run Development Server
-
-```bash
-npm run dev
-```
+### Installation
+1. Clone the repository:
+  ```sh
+  git clone <repo-url>
+  cd Revibe_Nestjs_Project
+  ```
+2. Install dependencies:
+  ```sh
+  npm install
+  ```
+3. Configure environment variables:
+  - Create a `.env` file in the root directory (see `.env.example` if available)
+4. (Optional) Seed the database:
+  ```sh
+  node scripts/seedDatabase.js
+  ```
+5. Start the development server:
+  ```sh
+  npm run dev
+  ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Available Routes
+
+---
+
+## Available Routes (Examples)
 
 - `/` - Home page with portal selection
 - `/admin/login` - Admin login page
@@ -228,83 +207,28 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - `/customer/login` - Customer login page
 - `/api/admin/login` - Admin login API endpoint
 - `/api/customer/login` - Customer login API endpoint
+- `/api/customer/post/list` - Customer feed API (cursor-based pagination)
+- `/api/admin/feed` - Admin feed API (with filters, metrics)
 
-## API Endpoints
-
-### Admin Login
-**POST** `/api/admin/login`
-
-Request Body:
-```json
-{
-  "email": "admin@example.com",
-  "password": "your_password"
-}
-```
-
-Response:
-```json
-{
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "id": "...",
-    "email": "admin@example.com",
-    "name": "Admin User",
-    "role": "admin"
-  }
-}
-```
-
-### Customer Login
-**POST** `/api/customer/login`
-
-Request Body:
-```json
-{
-  "email": "customer@example.com",
-  "password": "your_password"
-}
-```
-
-Response:
-```json
-{
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "id": "...",
-    "email": "customer@example.com",
-    "name": "Customer User",
-    "phone": "1234567890",
-    "address": "123 Main St"
-  }
-}
-```
-
-## Technologies Used
-
-- **Frontend**: React 19, Next.js 15, TypeScript
-- **Styling**: Tailwind CSS
-- **Database**: MongoDB with Mongoose
-- **Authentication**: bcryptjs
-- **Form Handling**: React Hooks
+---
 
 ## Development Notes
-
-- Passwords are hashed using bcryptjs with a salt round of 10
-- MongoDB connection uses connection pooling to optimize performance
-- Admin sessions are stored in localStorage (consider JWT tokens for production)
+- Passwords are hashed using bcryptjs (salt round 10)
+- MongoDB connection uses pooling
+- JWT tokens recommended for production
 - All API routes include error handling and validation
 
-## Future Enhancements
+---
 
+## Future Enhancements
 - [ ] JWT-based authentication
 - [ ] Password reset functionality
 - [ ] Customer dashboard
 - [ ] Admin user management
 - [ ] Protected API routes with middleware
 - [ ] Session management with cookies
+
+---
 
 ## License
 

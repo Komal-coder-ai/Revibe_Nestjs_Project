@@ -19,6 +19,7 @@ const mediaObjectSchema = z.object({
 
 export const createPostSchema = z.object({
   userId: z.string().min(1, 'userId is required'),
+  tribeId: z.string().optional(),
   type: z.enum(['image', 'video', 'text', 'carousel', 'poll', 'quiz', 'reel']),
   media: z.array(mediaObjectSchema).optional(),
   text: z.string().optional(),

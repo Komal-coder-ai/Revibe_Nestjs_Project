@@ -49,90 +49,49 @@
  *                   type: boolean
  */
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB  from '@/lib/db';
-import Post from '@/models/Post';
-import User from '@/models/User';
-import Comment from '@/models/Comment';
-import Like from '@/models/Like';
+import connectDB from '@/lib/db';
+import mongoose from 'mongoose';
+import { processPostsWithStats } from '@/common/processPostsWithStats';
+import { getAggregatedPosts } from '@/common/getAggregatedPosts';
+import { trackPostView } from '@/common/trackPostView';
 export async function GET(request: NextRequest) {
     await connectDB();
     try {
         const { searchParams } = new URL(request.url);
         const postId = searchParams.get('postId');
-        const userId = searchParams.get('userId');
+        let userId = searchParams.get('userId');
+        if (!userId) {
+            return NextResponse.json({ data: { status: false, message: 'userId is required' } }, { status: 400 });
+        }
         if (!postId || postId.length !== 24) {
             return NextResponse.json({ data: { status: false, message: 'Invalid postId' } }, { status: 400 });
         }
-        const post = await Post.findById(postId).lean() as any;
-        if (!post || post.isDeleted) {
+
+        // Use getAggregatedPosts for post detail, matching list API
+        const posts = await getAggregatedPosts({
+            match: {
+                _id: new mongoose.Types.ObjectId(postId),
+                isDeleted: false
+            }, limit: 1
+        });
+        if (!posts || posts.length === 0) {
             return NextResponse.json({ data: { status: false, message: 'Post not found' } }, { status: 404 });
         }
-        // Populate user info
-        const user = await User.findById(post.user).lean() as any;
-        const userObj = user ? {
-            _id: user._id,
-            name: user.name,
-            username: user.username,
-            profileImage: user.profileImage || []
-        } : null;
-        // Populate tagged users
-        let taggedUsers: any[] = [];
-        if (Array.isArray(post.taggedUsers) && post.taggedUsers.length > 0) {
-            const tagged = await User.find({ _id: { $in: post.taggedUsers } }).lean();
-            taggedUsers = tagged.map(u => ({
-                _id: u._id,
-                name: u.name,
-                username: u.username,
-                profileImage: u.profileImage || []
-            }));
+
+        // Track post view 
+        try {
+            await trackPostView(userId, postId);
+        } catch (e) {
+            // Log but do not block response if view tracking fails
+            console.error('Failed to record post view:', e);
         }
-        // Get comment count for this post
-        const commentCount = await Comment.countDocuments({ postId, isDeleted: false });
-        // Get like count for this post
-        const likeCount = await Like.countDocuments({ targetId: post._id, targetType: 'post', isDeleted: false });
-        // Get userLike status
-        let userLike = false;
-        if (userId) {
-            const like = await Like.findOne({ targetId: post._id, targetType: 'post', user: userId, isDeleted: false });
-            userLike = !!like;
-        }
-        // Format poll/quiz options and totalVotes if needed
-        let options = post.options;
-        let totalVotes = undefined;
-        if ((post.type === 'poll' || post.type === 'quiz') && Array.isArray(post.options)) {
-            // Aggregate votes for poll/quiz
-            const Vote = (await import('@/models/Vote')).default;
-            const votes = await Vote.find({ post: post._id });
-            totalVotes = votes.length;
-        }
-        // No need to fetch or return comments list in post detail API
-        // Get share count for this post
-        const Share = (await import('@/models/Share')).default;
-        const shareCount = await Share.countDocuments({ postId: post._id,type:'share' });
-        // Build response object to match post list (without comments array)
-        const responsePost = {
-            postId: post._id,
-            user: userObj,
-            taggedUsers,
-            type: post.type,
-            media: post.media,
-            text: post.text,
-            caption: post.caption,
-            location: post.location,
-            hashtags: post.hashtags,
-            options,
-            correctOption: post.correctOption,
-            createdAt: post.createdAt,
-            updatedAt: post.updatedAt,
-            commentCount,
-            likeCount,
-            shareCount,
-            userLike,
-            totalVotes
-        };
+
+        const [responsePost] = await processPostsWithStats(posts, userId);
         return NextResponse.json({ data: { status: true, post: responsePost } });
-    } catch (error: any) {
+    } catch (error) {
         console.error(error);
-        return NextResponse.json({ data: { status: false, message: error.message } }, { status: 500 });
+        const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+        return NextResponse.json({ data: { status: false, message } },
+            { status: 500 });
     }
 }

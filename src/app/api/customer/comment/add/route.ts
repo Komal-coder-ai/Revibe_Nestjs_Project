@@ -49,7 +49,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Comment from '@/models/Comment';
 import { createCommentSchema } from '../validator/schemas';
-import connectDB  from '@/lib/db';
+import connectDB from '@/lib/db';
 
 
 export async function POST(request: NextRequest) {
@@ -66,7 +66,22 @@ export async function POST(request: NextRequest) {
         }
       }, { status: 400 });
     }
-    const { postId, userId, content, mentions = [], parentId = null } = parsed.data;
+    let { postId, userId, content, mentions = [], parentId = null } = parsed.data;
+    // Normalize parentId: treat empty string or null as null
+    if (!parentId || parentId === "") parentId = null;
+
+    // Check if user is demo
+    const User = (await import('@/models/User')).default;
+    const user = await User.findById(userId);
+    if (!user) {
+      return NextResponse.json({
+        data: {
+          status: false,
+          message: 'User not found'
+        }
+      }, { status: 404 });
+    }
+
     const comment = await Comment.create({
       postId,
       userId,
@@ -84,7 +99,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.log(error);
-    
     return NextResponse.json({
       data: {
         status: false,

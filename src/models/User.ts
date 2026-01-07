@@ -6,6 +6,7 @@ const UserSchema = new Schema(
     mobile: { type: String, index: true },
     aadhar: { type: String, default: '', index: true },
     name: { type: String, default: '' },
+    aadharName: { type: String, default: '' },
     username: { type: String, default: '' },
     email: { type: String, default: '' },
     bio: { type: String, default: '' },
@@ -41,7 +42,9 @@ const UserSchema = new Schema(
     },
 
     isVerified: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: true },
     profileType: { type: String, enum: ['public', 'private'], default: 'public' },
+    showActivityStatus: { type: Boolean, default: false },
     status: { type: Number, enum: [0, 1], default: 1 },
     otp: { type: String, default: '' },
     otpExpiresAt: { type: Date, default: null },
@@ -54,25 +57,6 @@ const UserSchema = new Schema(
   },
   { timestamps: true }
 );
-
-// Pre-save hook to ensure profileImage is always an array of objects
-// UserSchema.pre('save', function (next) {
-//   if (typeof this.profileImage === 'string') {
-//     this.profileImage = [{
-//       imageUrl: this.profileImage,
-//       thumbUrl: '',
-//       type: '',
-//       width: '',
-//       height: '',
-//       orientation: '',
-//       format: ''
-//     }];
-//   }
-//   if (!Array.isArray(this.profileImage)) {
-//     this.profileImage = [];
-//   }
-//   next();
-// });
 
 const User = (mongoose.models.User as mongoose.Model<any>) || mongoose.model('User', UserSchema);
 export default User;

@@ -8,8 +8,16 @@
  *       - User
  *     parameters:
  *       - in: query
+ *         name: targetUserId
+ *         required: true
+ *         description: The user ID of the profile to fetch.
+ *         schema:
+ *           type: string
+ *           example: "65a1234567890abcdef12345"
+ *       - in: query
  *         name: userId
  *         required: true
+ *         description: The user ID of the requester (client must provide this since there is no authentication).
  *         schema:
  *           type: string
  *           example: "65a1234567890abcdef12345"
@@ -71,53 +79,76 @@
  */
 
 import { NextResponse } from 'next/server';
-// import { verifyAccessToken } from '../../../../lib/jwt';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
+import { getSingleFollowStatus } from '@/common/getFollowStatusMap';
 
-// GET /api/user/get-profile?userId=...
+// GET /api/user/get-profile?userId=...&targetUserId=...
 export async function GET(req: Request) {
   try {
     // JWT and authorization header removed: public access
     await connectDB();
     const { searchParams } = new URL(req.url!);
-    const userId = searchParams.get('userId');
-    if (!userId) return NextResponse.json({ data: { status: false, message: 'userId required' } }, { status: 400 });
+    const userId = searchParams.get('userId'); // requester
+    const targetUserId = searchParams.get('targetUserId'); // profile to fetch
+    if (!userId || !targetUserId) {
+      return NextResponse.json({ data: { status: false, message: 'userId and targetUserId required' } }, { status: 400 });
+    }
 
-    const user = await User.findById(userId);
-    if (!user) return NextResponse.json({ data: { status: false, message: 'User not found' } }, { status: 404 });
+    const targetUser = await User.findById(targetUserId);
+    if (!targetUser) return NextResponse.json({ data: { status: false, message: 'User not found' } }, { status: 404 });
 
 
     // Get followers, followings, and post count
     const Follow = (await import('@/models/Follow')).default;
     const Post = (await import('@/models/Post')).default;
     const [followers, followings, postCount] = await Promise.all([
-      Follow.countDocuments({ following: userId, status: 'accepted', isDeleted: false }),
-      Follow.countDocuments({ follower: userId, status: 'accepted', isDeleted: false }),
-      Post.countDocuments({ userId, isDeleted: false })
+      Follow.countDocuments({ following: targetUserId, status: 'accepted', isDeleted: false }),
+      Follow.countDocuments({ follower: targetUserId, status: 'accepted', isDeleted: false }),
+      Post.countDocuments({ userId: targetUserId, isDeleted: false })
     ]);
 
 
-    const raw = user.toObject ? user.toObject() : user;
-    const profile = {
-      userId: raw._id?.toString?.() ?? raw._id,
-      countryCode: raw.countryCode || '',
-      mobile: raw.mobile || '',
-      aadhar: raw.aadhar || '',
-      username: raw.username || '',
-      name: raw.name || '',
-      email: raw.email || '',
-      bio: raw.bio || '',
-      profileImage: raw.profileImage || '',
-      coverImage: raw.coverImage || '',
-      isVerified: !!raw.isVerified,
-      userType: raw.userType || '',
-      followers,
-      followings,
-      postCount
-    };
-    // console.log(profile);
-    
+    let profile;
+    const raw = targetUser.toObject ? targetUser.toObject() : targetUser;
+    if (userId === targetUserId) {
+      // Return full profile for self
+      profile = {
+        userId: raw._id?.toString?.() ?? raw._id,
+        countryCode: raw.countryCode || '',
+        mobile: raw.mobile || '',
+        aadhar: raw.aadhar || '',
+        aadharName: raw.aadharName || '',
+        username: raw.username || '',
+        name: raw.name || '',
+        email: raw.email || '',
+        bio: raw.bio || '',
+        profileImage: raw.profileImage || '',
+        coverImage: raw.coverImage || '',
+        isVerified: !!raw.isVerified,
+        isLoggedInUser: true,
+        userType: raw.userType || '',
+        followers,
+        followings,
+        postCount
+      };
+    } else {
+      // Return public profile for others
+      const followStatusCode = await getSingleFollowStatus(userId, targetUserId);
+      profile = {
+        userId: raw._id?.toString?.() ?? raw._id,
+        username: raw.username || '',
+        name: raw.name || '',
+        bio: raw.bio || '',
+        profileImage: raw.profileImage || '',
+        coverImage: raw.coverImage || '',
+        isLoggedInUser: false,
+        followers,
+        followings,
+        postCount,
+        followStatusCode
+      };
+    }
     return NextResponse.json({ data: { status: true, message: 'Profile fetched', user: profile } });
   } catch (error) {
     console.error('Error fetching user profile:', error);

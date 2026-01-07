@@ -3,7 +3,7 @@
  * /api/customer/follow/followers:
  *   get:
  *     summary: Get followers list
- *     description: Retrieves a paginated list of followers for a user, with optional search.
+ *     description: Retrieves a paginated list of users who follow the specified user, with optional search.
  *     tags:
  *       - Follow
  *     parameters:
@@ -14,16 +14,31 @@
  *           type: string
  *           example: "65a1234567890abcdef12345"
  *       - in: query
- *         name: page
- *         required: false
+ *         name: targetId
+ *         required: true
  *         schema:
- *           type: integer
- *           example: 1
+ *           type: string
+ *           example: "65a1234567890abcdef67890"
  *       - in: query
- *         name: pageSize
+ *         name: cursor
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: "2024-12-31T23:59:59.999Z"
+ *         description: The createdAt value of the last follower from the previous page. Used for cursor-based pagination. Must be used together with cursorId.
+ *       - in: query
+ *         name: cursorId
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example: "65a1234567890abcdef12345"
+ *         description: The followerId (or _id) of the last follower from the previous page. Used for cursor-based pagination. Must be used together with cursor.
+ *       - in: query
+ *         name: limit
  *         required: false
  *         schema:
  *           type: integer
+ *           default: 20
  *           example: 20
  *       - in: query
  *         name: search
@@ -56,41 +71,64 @@
  *                 pageSize:
  *                   type: integer
  */
+
 // Followers list API with pagination
+
 import { NextRequest, NextResponse } from 'next/server';
-// JWT import removed
-import connectDB  from '@/lib/db';
+import connectDB from '@/lib/db';
 import Follow from '@/models/Follow';
-import mongoose from 'mongoose';
+import mongoose, { PipelineStage } from 'mongoose';
+import { getFollowStatusMap } from '@/common/getFollowStatusMap';
 
 export async function GET(req: NextRequest) {
     try {
-        // JWT and authorization header removed: public access
         await connectDB();
         const { searchParams } = new URL(req.url);
-        const userId = searchParams.get('userId');
-        const page = parseInt(searchParams.get('page') || '1', 10);
-        const pageSize = parseInt(searchParams.get('pageSize') || '20', 10);
+        const userId = searchParams.get('userId'); // logged-in user
+        const targetId = searchParams.get('targetId'); // whose followers to fetch
+        const cursor = searchParams.get('cursor');
+        const cursorId = searchParams.get('cursorId');
+        const limit = parseInt(searchParams.get('limit') || '20', 10);
         const search = searchParams.get('search')?.trim() || '';
 
-        if (!userId) return NextResponse.json({
+        if (!userId || !targetId) return NextResponse.json({
             data: {
-                status: false, message: 'userId required'
+                status: false, message: 'userId and targetId required'
             }
         },
             { status: 400 });
 
         const matchStage = {
-            following: new mongoose.Types.ObjectId(userId),
+            following: new mongoose.Types.ObjectId(targetId),
             status: 'accepted',
             isDeleted: false
         };
         const searchStage = search
             ? [{ $match: { 'followerUser.username': { $regex: search, $options: 'i' } } }]
             : [];
+
+        // Cursor-based pagination logic
+        let cursorFilter: PipelineStage[] = [];
+        if (cursor && cursorId) {
+            cursorFilter = [
+                {
+                    $match: {
+                        $or: [
+                            { createdAt: { $lt: new Date(cursor) } },
+                            {
+                                createdAt: { $eq: new Date(cursor) },
+                                _id: { $lt: new mongoose.Types.ObjectId(cursorId) }
+                            }
+                        ]
+                    }
+                }
+            ];
+        }
+
         const followers = await Follow.aggregate([
             { $match: matchStage },
-            { $sort: { createdAt: -1 } },
+            ...cursorFilter,
+            { $sort: { createdAt: -1, _id: -1 } },
             {
                 $lookup: {
                     from: 'users',
@@ -101,8 +139,7 @@ export async function GET(req: NextRequest) {
             },
             { $unwind: { path: '$followerUser', preserveNullAndEmptyArrays: true } },
             ...searchStage,
-            { $skip: (page - 1) * pageSize },
-            { $limit: pageSize },
+            { $limit: limit },
             // Add followersCount for each followerUser
             {
                 $lookup: {
@@ -128,63 +165,44 @@ export async function GET(req: NextRequest) {
                     name: '$followerUser.name',
                     profileImage: '$followerUser.profileImage',
                     followersCount: 1,
+                    createdAt: 1,
+                    followerId: '$_id'
                 }
             }
         ]);
 
-        //     1 = following (accepted)
-        // 2 = not following
-        // 3 = requested (pending)
-        // 4 = rejected
-
-        // Add followStatus for each user in the list
+        // Add followStatusCode for each user in the list (from logged-in user to each follower)
         const followerUserIds = followers.map(f => f.userId?.toString?.() ?? f.userId);
-        const followDocs = await Follow.find({
-            follower: userId,
-            following: { $in: followerUserIds },
-            isDeleted: false
-        }).select('following status');
-        const statusMap = new Map();
-        for (const doc of followDocs) {
-            const id = doc.following.toString();
-            if (doc.status === 'accepted') statusMap.set(id, 1);
-            else if (doc.status === 'pending') statusMap.set(id, 3);
-            else if (doc.status === 'rejected') statusMap.set(id, 4);
-        }
+        const followStatusMap = await getFollowStatusMap(userId, followerUserIds);
         for (const f of followers) {
             const id = f.userId?.toString?.() ?? f.userId;
-            f.followStatus = statusMap.get(id) || 2;
+            f.followStatusCode = followStatusMap[id] ?? 0;
         }
 
-        // For total, apply the same search filter
-        const totalAgg = await Follow.aggregate([
-            { $match: matchStage },
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'follower',
-                    foreignField: '_id',
-                    as: 'followerUser'
-                }
-            },
-            { $unwind: { path: '$followerUser', preserveNullAndEmptyArrays: true } },
-            ...searchStage,
-            { $count: 'total' }
-        ]);
-        const total = totalAgg[0]?.total || 0;
+        // Prepare next cursor
+        let nextCursor = null;
+        let nextCursorId = null;
+        if (followers.length === limit) {
+            const last = followers[followers.length - 1];
+            nextCursor = last.createdAt;
+            nextCursorId = last.followerId;
+        }
+
         return NextResponse.json(
             {
                 data:
                 {
                     status: true,
                     message: 'Followers fetched',
-                    followers, total, page, pageSize
+                    followers,
+                    nextCursor,
+                    nextCursorId,
+                    limit
                 }
             });
     } catch (error) {
         console.log('Error in fetching followers:', error);
         const message = (error instanceof Error) ? error.message : 'Internal server error';
         return NextResponse.json({ data: { status: false, message } }, { status: 500 });
-
     }
 }

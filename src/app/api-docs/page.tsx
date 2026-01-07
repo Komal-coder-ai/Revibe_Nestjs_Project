@@ -74,7 +74,7 @@ export default function ApiDocs() {
         </div>
       </div>
       <div className="max-w-7xl mx-auto">
-        <SwaggerUI spec={spec} />
+        {spec ? <SwaggerUI spec={spec} /> : <div className="text-red-600">Failed to load API documentation</div>}
       </div>
     </div>
   );

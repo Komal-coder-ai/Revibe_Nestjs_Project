@@ -17,6 +17,10 @@
  *                 type: string
  *                 example: "65a1234567890abcdef12345"
  *                 default: ""
+ *               tribeId:
+ *                 type: string
+ *                 example: "65a1234567890abcdef99999"
+ *                 description: "Optional. The tribe ID to associate this post with. If not provided, creates a regular post."
  *               type:
  *                 type: string
  *                 example: "image"
@@ -121,17 +125,21 @@ import Post from '@/models/Post';
 import { createPostSchema } from '../validator/schemas';
 import { extractHashtags } from '@/lib/hashtag';
 import Hashtag from '@/models/Hashtag';
+import { Data } from '@mux/mux-node/resources.mjs';
 
 // POST /api/post/create - Create a new post
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
     const body = await req.json();
+    console.log('Received create post request:', body);
     const parse = createPostSchema.safeParse(body);
     if (!parse.success) {
       return NextResponse.json({ data: { status: false, message: 'Validation error', errors: parse.error.issues } }, { status: 400 });
     }
-    const { userId, type, media, text, caption, location, taggedUsers, options, correctOption } = parse.data;
+    const { userId, type, media, text, caption, location, taggedUsers, options, correctOption, tribeId } = parse.data;
+    console.log('create post:', parse.data);
+
     const hashtags = extractHashtags((text || '') + ' ' + (caption || ''));
     // Update hashtag counts in Hashtag collection
     if (hashtags.length > 0) {
@@ -173,6 +181,7 @@ export async function POST(req: NextRequest) {
       options: formattedOptions || [],
       correctOption: formattedCorrectOption,
       pollResults: [],
+      tribe: tribeId || undefined,
     });
     return NextResponse.json({ data: { status: true, message: 'Post created', post } });
   } catch (error) {

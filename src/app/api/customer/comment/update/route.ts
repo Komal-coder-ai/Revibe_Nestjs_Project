@@ -16,6 +16,9 @@
  *               commentId:
  *                 type: string
  *                 example: "65a1234567890abcdef12345"
+ *               userId:
+ *                 type: string
+ *                 example: "65a1234567890abcdef67890"
  *               content:
  *                 type: string
  *                 example: "Updated comment content"
@@ -49,7 +52,8 @@ export async function POST(request: NextRequest) {
   await connectDB();
   try {
     const body = await request.json();
-    const idParsed = commentIdSchema.safeParse({ commentId: body.commentId });
+    const { commentId, userId } = body;
+    const idParsed = commentIdSchema.safeParse({ commentId });
     const updateParsed = updateCommentSchema.safeParse({ content: body.content, mentions: body.mentions });
     if (!idParsed.success || !updateParsed.success) {
       return NextResponse.json({
@@ -60,9 +64,17 @@ export async function POST(request: NextRequest) {
         }
       }, { status: 400 });
     }
-    const { commentId } = idParsed.data;
+    if (!userId || !/^[a-fA-F0-9]{24}$/.test(userId)) {
+      return NextResponse.json({
+        data: {
+          status: false,
+          message: 'Valid userId is required'
+        }
+      }, { status: 400 });
+    }
     const { content, mentions = [] } = updateParsed.data;
-    const comment = await Comment.findByIdAndUpdate(commentId, { content, mentions }, { new: true });
+    // Find the comment and check ownership
+    const comment = await Comment.findOne({ _id: commentId, isDeleted: false });
     if (!comment) {
       return NextResponse.json({
         data: {
@@ -71,6 +83,17 @@ export async function POST(request: NextRequest) {
         }
       }, { status: 404 });
     }
+    if (comment.userId.toString() !== userId) {
+      return NextResponse.json({
+        data: {
+          status: false,
+          message: 'You are not authorized to update this comment'
+        }
+      }, { status: 403 });
+    }
+    comment.content = content;
+    comment.mentions = mentions;
+    await comment.save();
     return NextResponse.json({
       data: {
         status: true,

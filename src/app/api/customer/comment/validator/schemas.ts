@@ -5,7 +5,11 @@ export const createCommentSchema = z.object({
   userId: z.string().length(24, 'Invalid userId'),
   content: z.string().min(1, 'Comment cannot be empty'),
   mentions: z.array(z.string().length(24)).optional(),
-  parentId: z.string().length(24, 'Invalid parentId').optional().nullable(),
+  parentId: z.union([
+    z.string().length(24, 'Invalid parentId'),
+    z.literal(''),
+    z.null()
+  ]).optional(),
 });
 
 export const updateCommentSchema = z.object({

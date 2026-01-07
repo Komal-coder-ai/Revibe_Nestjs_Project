@@ -14,12 +14,12 @@
  *           type: string
  *         description: The ID of the user whose saved posts to fetch
  *       - in: query
- *         name: page
+ *         name: cursorId
  *         required: false
  *         schema:
- *           type: integer
- *           default: 1
- *         description: Page number for pagination
+ *           type: string
+ *           example: "65a1234567890abcdef12345"
+ *         description: The _id of the last saved post from the previous page. For the first page, leave empty.
  *       - in: query
  *         name: limit
  *         required: false
@@ -55,52 +55,74 @@
  *                             type: string
  *                           user:
  *                             type: object
- *                             properties:
- *                               _id: { type: string }
- *                               username: { type: string }
- *                               name: { type: string }
- *                               profileImage: { type: array, items: { type: object } }
- *                               followersCount: { type: integer }
+ *                           userVoted:
+ *                             type: boolean
+ *                             description: True if the logged-in user has voted on this poll/quiz post, false otherwise.
+ *                           userVoteOption:
+ *                             type: integer
+ *                             nullable: true
+ *                             description: The index of the option the user selected, or null if not voted.
  *                           taggedUsers:
  *                             type: array
  *                             items:
  *                               type: object
- *                               properties:
- *                                 _id: { type: string }
- *                                 username: { type: string }
- *                                 name: { type: string }
- *                                 profileImage: { type: array, items: { type: object } }
- *                           type: { type: string }
- *                           media: { type: array, items: { type: object } }
- *                           text: { type: string }
- *                           caption: { type: string }
- *                           location: { type: string }
- *                           hashtags: { type: array, items: { type: string } }
- *                           options: { type: array, items: { type: object } }
- *                           correctOption: { type: integer }
- *                           createdAt: { type: string, format: date-time }
- *                           updatedAt: { type: string, format: date-time }
- *                           commentCount: { type: integer }
- *                           likeCount: { type: integer }
- *                           userLike: { type: boolean }
- *                           totalVotes: { type: integer, nullable: true }
- *                     pagination:
- *                       type: object
- *                       properties:
- *                         page: { type: integer }
- *                         limit: { type: integer }
- *                         total: { type: integer }
- *                         totalPages: { type: integer }
- */
+ *                           type:
+ *                             type: string
+ *                           media:
+ *                             type: array
+ *                             items:
+ *                               type: object
+ *                           text:
+ *                             type: string
+ *                           caption:
+ *                             type: string
+ *                           location:
+ *                             type: string
+ *                           hashtags:
+ *                             type: array
+ *                             items:
+ *                               type: string
+ *                           options:
+ *                             type: array
+ *                             items:
+ *                               type: object
+ *                           correctOption:
+ *                             type: integer
+ *                           createdAt:
+ *                             type: string
+ *                             format: date-time
+ *                           updatedAt:
+ *                             type: string
+ *                             format: date-time
+ *                           commentCount:
+ *                             type: integer
+ *                           likeCount:
+ *                             type: integer
+ *                           shareCount:
+ *                             type: integer
+ *                           userLike:
+ *                             type: boolean
+ *                           totalVotes:
+ *                             type: integer
+ *                             nullable: true
+ *                           isLoggedInUser:
+ *                             type: boolean
+ *                           followStatusCode:
+ *                             type: integer
+ *                             description: Follow/friend status code between logged-in user and post's user. 0 = no relation, 1 = pending, 2 = accepted, 3 = rejected, 4 = self.
+ *                     nextCursorId:
+ *                       type: string
+ *                       nullable: true
+ *                       example: "65a1234567890abcdef12345"
+ *                     limit:
+ *                       type: integer
+ * */
 import { NextRequest, NextResponse } from 'next/server';
-import SavedPost from '@/models/SavedPost';
 import connectDB from '@/lib/db';
 import mongoose from 'mongoose';
-import Post from '@/models/Post';
-import Comment from '@/models/Comment';
-import Vote from '@/models/Vote';
-import Like from '@/models/Like';
-import Follow from '@/models/Follow';
+import SavedPost from '@/models/SavedPost';
+import { getAggregatedPosts } from '@/common/getAggregatedPosts';
+import { processPostsWithStats } from '@/common/processPostsWithStats';
 
 
 // Separate API for saved post list (GET)
@@ -108,16 +130,24 @@ export async function GET(req: NextRequest) {
     try {
         await connectDB();
         const userId = req.nextUrl.searchParams.get('userId');
-        const page = parseInt(req.nextUrl.searchParams.get('page') || '1', 10);
+        const cursorId = req.nextUrl.searchParams.get('cursorId');
         const limit = parseInt(req.nextUrl.searchParams.get('limit') || '10', 10);
         if (!userId) {
             return NextResponse.json({ data: { status: false, message: 'userId is required' } }, { status: 400 });
         }
-        // Get all saved postIds for the user (paginated)
-        const savedDocs = await SavedPost.find({ userId: new mongoose.Types.ObjectId(userId), isDeleted: false })
-            .skip((page - 1) * limit)
+        // Cursor-based pagination for saved posts
+        const savedFilter: any = { userId: new mongoose.Types.ObjectId(userId), isDeleted: false };
+        if (cursorId) {
+            savedFilter._id = { $lt: cursorId };
+        }
+        const savedDocs = await SavedPost.find(savedFilter)
+            .sort({ _id: -1 })
             .limit(limit);
-        const postIds = savedDocs.map(doc => doc.postId);
+        const postIds = savedDocs.map(doc =>
+            typeof doc.postId === 'string' && mongoose.Types.ObjectId.isValid(doc.postId)
+                ? new mongoose.Types.ObjectId(doc.postId)
+                : doc.postId
+        );
         // Build post match filter
         let postMatch: any = { _id: { $in: postIds }, isDeleted: false };
         const search = req.nextUrl.searchParams.get('search');
@@ -129,125 +159,21 @@ export async function GET(req: NextRequest) {
                 { hashtags: regex }
             ];
         }
-        // Get posts
-        const posts = await Post.aggregate([
-            { $match: postMatch },
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'user',
-                    foreignField: '_id',
-                    as: 'user',
-                }
-            },
-            { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'taggedUsers',
-                    foreignField: '_id',
-                    as: 'taggedUsers',
-                }
-            },
-            {
-                $project: {
-                    user: { username: 1, name: 1, profileImage: 1, _id: 1 },
-                    taggedUsers: { username: 1, name: 1, profileImage: 1, _id: 1 },
-                    type: 1,
-                    media: 1,
-                    text: 1,
-                    caption: 1,
-                    location: 1,
-                    hashtags: 1,
-                    options: 1,
-                    correctOption: 1,
-                    createdAt: 1,
-                    updatedAt: 1
-                }
-            }
-        ]);
-        // For poll/quiz posts, aggregate votes from Vote model
-        const votes = await Vote.find({ post: { $in: postIds } });
-        // Aggregate comment counts for each post
-        const commentCountsArr = await Comment.aggregate([
-            { $match: { postId: { $in: postIds }, isDeleted: false } },
-            { $group: { _id: '$postId', count: { $sum: 1 } } }
-        ]);
-        const commentCounts: Record<string, number> = {};
-        commentCountsArr.forEach((c: any) => { commentCounts[c._id.toString()] = c.count; });
-        // Like counts and userLike
-        const likeResults: Record<string, { likeCount: number, userLike: boolean }> = {};
-        const likeCountsArr = await Like.aggregate([
-            { $match: { targetId: { $in: postIds }, targetType: 'post', isDeleted: false } },
-            { $group: { _id: '$targetId', count: { $sum: 1 } } }
-        ]);
-        likeCountsArr.forEach((l) => { likeResults[l._id.toString()] = { likeCount: l.count, userLike: false }; });
-        const userLikesArr = await Like.find({ targetId: { $in: postIds }, targetType: 'post', user: userId, isDeleted: false }).select('targetId');
-        userLikesArr.forEach((ul: any) => {
-            const postIdStr = ul.targetId.toString();
-            if (likeResults[postIdStr]) {
-                likeResults[postIdStr].userLike = true;
-            } else {
-                likeResults[postIdStr] = { likeCount: 0, userLike: true };
-            }
-        });
-        // Followers count for all post users
-        const userIds = posts.map((p: any) => p.user?._id).filter(Boolean);
-        const followersArr = await Follow.aggregate([
-            { $match: { following: { $in: userIds }, status: 'accepted', isDeleted: false } },
-            { $group: { _id: '$following', count: { $sum: 1 } } }
-        ]);
-        const followersCountMap: Record<string, number> = {};
-        followersArr.forEach((f: any) => { followersCountMap[f._id.toString()] = f.count; });
-        // Aggregate share counts for each post
-        const Share = (await import('@/models/Share')).default;
-        const shareCountsArr = await Share.aggregate([
-            { $match: { postId: { $in: postIds }, type: 'share' } },
-            { $group: { _id: '$postId', count: { $sum: 1 } } }
-        ]);
-        const shareCounts: Record<string, number> = {};
-        shareCountsArr.forEach((s: any) => { shareCounts[s._id.toString()] = s.count; });
-
-        // Compose response like post list API
-        const postsWithStats = posts.map((post: any) => {
-            const { _id, ...rest } = post;
-            let basePost = { ...rest, postId: _id };
-            const commentCount = commentCounts[_id.toString()] || 0;
-            const likeCount = likeResults[_id.toString()]?.likeCount || 0;
-            const shareCount = shareCounts[_id.toString()] || 0;
-            if (basePost.user && basePost.user._id) {
-                basePost.user.followersCount = followersCountMap[basePost.user._id.toString()] || 0;
-            }
-            const userLike = likeResults[_id.toString()]?.userLike || false;
-            if ((post.type === 'poll' || post.type === 'quiz') && Array.isArray(post.options)) {
-                const postVotes = votes.filter((v: any) => v.post.toString() === post._id.toString());
-                const totalVotes = postVotes.length;
-                const optionCounts: Record<number, number> = {};
-                postVotes.forEach((v: any) => { optionCounts[v.optionIndex] = (optionCounts[v.optionIndex] || 0) + 1; });
-                const pollResults = post.options.map((opt: any, idx: number) => ({
-                    optionIndex: idx,
-                    text: opt.text,
-                    count: typeof optionCounts[idx] === 'number' ? optionCounts[idx] : 0,
-                    percent: totalVotes > 0 && typeof optionCounts[idx] === 'number'
-                        ? Math.round((optionCounts[idx] / totalVotes) * 100)
-                        : 0
-                }));
-                return { ...basePost, totalVotes, options: pollResults, commentCount, likeCount, shareCount, userLike };
-            }
-            return { ...basePost, commentCount, likeCount, shareCount, userLike };
-        });
-        // Get total count for pagination
-        const total = await SavedPost.countDocuments({ userId: new mongoose.Types.ObjectId(userId), isDeleted: false });
+        // Use shared aggregation utility
+        const posts = await getAggregatedPosts({ match: postMatch, limit });
+        // Use shared post-processing utility for stats, likes, votes, etc.
+        const postsWithStats = await processPostsWithStats(posts, userId);
+        // Prepare nextCursorId
+        let nextCursorId = null;
+        if (savedDocs.length === limit) {
+            nextCursorId = savedDocs[savedDocs.length - 1]._id.toString();
+        }
         return NextResponse.json({
             data: {
                 status: true,
                 posts: postsWithStats,
-                pagination: {
-                    page,
-                    limit,
-                    total,
-                    totalPages: Math.ceil(total / limit)
-                }
+                nextCursorId,
+                limit
             }
         });
     } catch (error) {
