@@ -104,11 +104,11 @@ export default function AdminLogin() {
           </button>
         </form>
 
-        {/* <div className="mt-6 text-center">
-          <a href="/customer/login" className="text-blue-600 hover:text-blue-700 text-sm">
-            Login as Customer
+        <div className="mt-6 text-center">
+          <a href="/admin/forgotpassword" className="text-blue-600 hover:text-blue-700 text-sm">
+            Forgot Password?
           </a>
-        </div> */}
+        </div>
       </div>
     </div>
   );
