@@ -9,7 +9,7 @@
  *     parameters:
  *       - in: query
  *         name: userId
- *         required: true
+ *         required: false
  *         schema:
  *           type: string
  *         description: The ID of the user making the request (for like/follow info)
@@ -149,11 +149,13 @@ export async function GET(req: NextRequest) {
         await connectDB();
         const { searchParams } = new URL(req.url);
         // userId: currently logged-in user (for like/feed info), targetId: whose posts to fetch (required)
-        const userId = searchParams.get('userId');
+        // const userId = searchParams.get('userId');
+        let userId = searchParams.get('userId') ?? undefined;
+
         const targetId = searchParams.get('targetId');
-        if (!userId) {
-            return NextResponse.json({ data: { status: false, message: 'userId is required' } }, { status: 400 });
-        }
+        // if (!userId) {
+        //     return NextResponse.json({ data: { status: false, message: 'userId is required' } }, { status: 400 });
+        // }
         if (!targetId) {
             return NextResponse.json({ data: { status: false, message: 'targetId is required' } }, { status: 400 });
         }

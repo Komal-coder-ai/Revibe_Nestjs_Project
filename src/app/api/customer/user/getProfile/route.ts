@@ -16,7 +16,7 @@
  *           example: "65a1234567890abcdef12345"
  *       - in: query
  *         name: userId
- *         required: true
+ *         required: false
  *         description: The user ID of the requester (client must provide this since there is no authentication).
  *         schema:
  *           type: string
@@ -82,6 +82,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
 import { getSingleFollowStatus } from '@/common/getFollowStatusMap';
+import Store from '@/models/Store';
 
 // GET /api/user/get-profile?userId=...&targetUserId=...
 export async function GET(req: Request) {
@@ -89,10 +90,12 @@ export async function GET(req: Request) {
     // JWT and authorization header removed: public access
     await connectDB();
     const { searchParams } = new URL(req.url!);
-    const userId = searchParams.get('userId'); // requester
+    // const userId = searchParams.get('userId'); // requester
+    let userId = searchParams.get('userId') ?? undefined;
+
     const targetUserId = searchParams.get('targetUserId'); // profile to fetch
-    if (!userId || !targetUserId) {
-      return NextResponse.json({ data: { status: false, message: 'userId and targetUserId required' } }, { status: 400 });
+    if (!targetUserId) {
+      return NextResponse.json({ data: { status: false, message: 'targetUserId required' } }, { status: 400 });
     }
 
     const targetUser = await User.findById(targetUserId);
@@ -108,6 +111,7 @@ export async function GET(req: Request) {
       Post.countDocuments({ userId: targetUserId, isDeleted: false })
     ]);
 
+    let userStoreId = await Store.findOne({ ownerId: targetUserId, isDeleted: false }).select('_id');
 
     let profile;
     const raw = targetUser.toObject ? targetUser.toObject() : targetUser;
@@ -130,11 +134,15 @@ export async function GET(req: Request) {
         userType: raw.userType || '',
         followers,
         followings,
-        postCount
+        postCount,
+        userStoreId: userStoreId?._id?.toString() || null,
       };
     } else {
       // Return public profile for others
-      const followStatusCode = await getSingleFollowStatus(userId, targetUserId);
+      let followStatusCode = 0;
+      if (userId) {
+        followStatusCode = await getSingleFollowStatus(userId, targetUserId);
+      }
       profile = {
         userId: raw._id?.toString?.() ?? raw._id,
         username: raw.username || '',
@@ -146,7 +154,8 @@ export async function GET(req: Request) {
         followers,
         followings,
         postCount,
-        followStatusCode
+        followStatusCode,
+        userStoreId: userStoreId?._id?.toString() || null,
       };
     }
     return NextResponse.json({ data: { status: true, message: 'Profile fetched', user: profile } });

@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
  *     parameters:
  *       - in: query
  *         name: userId
- *         required: true
+ *         required: false
  *         schema:
  *           type: string
  *           example: "65a1234567890abcdef12345"
@@ -102,9 +102,7 @@ import { NextRequest, NextResponse } from 'next/server';
  *                       example: "65a1234567890abcdef12345"
  */
 import connectDB from '@/lib/db';
-import { getAggregatedPosts } from '@/common/getAggregatedPosts';
 import Hashtag from '@/models/Hashtag';
-import mongoose from 'mongoose';
 import { processPostsWithStats } from '@/common/processPostsWithStats';
 
 
@@ -115,10 +113,11 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
-    if (!userId) {
-      return NextResponse.json({ data: { status: false, message: 'userId is required' } }, { status: 400 });
-    }
+    let userId = searchParams.get('userId') ?? undefined;
+    if (userId === '' || userId === 'null' || userId == null) userId = "";
+    // if (!userId) {
+    //   return NextResponse.json({ data: { status: false, message: 'userId is required' } }, { status: 400 });
+    // }
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     let cursor = searchParams.get('cursor');
     let cursorId = searchParams.get('cursorId');
@@ -128,7 +127,7 @@ export async function GET(req: NextRequest) {
 
     // Always use feed logic
     const { getFeedPosts } = await import('./services/feedService');
-    const posts = await getFeedPosts({ userId, cursor: cursor ?? undefined, cursorId: cursorId ?? undefined, limit, type });
+    const posts = await getFeedPosts({ userId: userId ?? undefined, cursor: cursor ?? undefined, cursorId: cursorId ?? undefined, limit, type });
     const trending = await Hashtag.find({}).sort({ count: -1 }).limit(10).select('tag count -_id');
     const postsWithPollStats = await processPostsWithStats(posts, userId);
 

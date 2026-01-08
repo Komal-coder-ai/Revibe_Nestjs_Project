@@ -13,7 +13,7 @@
  *         name: userId
  *         schema:
  *           type: string
- *         required: true
+ *         required: false
  *         description: Logged-in user's MongoDB ObjectId
  *         example: "64d999abcd456ef789045555"
  *       - in: query

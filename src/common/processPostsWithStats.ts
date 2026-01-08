@@ -1,7 +1,8 @@
 import { getFollowStatusMap } from '@/common/getFollowStatusMap';
+import Vote from '@/models/Vote';
 
 // Helper to add computed fields to posts (used for both feed, list, detail, etc.)
-export async function processPostsWithStats(posts: any[], userId: string) {
+export async function processPostsWithStats(posts: any[], userId?: string) {
   const postIds = posts.map((p: any) => p._id || p.postId);
   const [
     votes,
@@ -9,7 +10,7 @@ export async function processPostsWithStats(posts: any[], userId: string) {
     Like,
     Follow,
     Share,
-    userVotesArr
+    // userVotesArr
   ] = await Promise.all([
     (await import('@/models/Vote')).default.find({ post: { $in: postIds } }),
     (await import('@/models/Comment')).default.aggregate([
@@ -19,8 +20,14 @@ export async function processPostsWithStats(posts: any[], userId: string) {
     (await import('@/models/Like')).default,
     (await import('@/models/Follow')).default,
     (await import('@/models/Share')).default,
-    (await import('@/models/Vote')).default.find({ post: { $in: postIds }, user: userId })
+    // (await import('@/models/Vote')).default.find({ post: { $in: postIds }, user: userId })
   ]);
+  let userVotesArr: string[] = [];
+  if (userId) {
+    const votes = await Vote.find({ post: { $in: postIds }, user: userId }).select('post').lean();
+    userVotesArr = votes.map(v => v.post.toString());
+  }
+  // console.log('Processing posts with stats:', userVotesArr);
   // Map of user's vote option for poll/quiz posts
   const userVotesMap: Record<string, any> = {};
   userVotesArr.forEach((v: any) => {
@@ -37,20 +44,33 @@ export async function processPostsWithStats(posts: any[], userId: string) {
     { $match: { targetId: { $in: postIds }, targetType: 'post', isDeleted: false } },
     { $group: { _id: '$targetId', count: { $sum: 1 } } }
   ]);
+
   const likeResults: Record<string, { likeCount: number, userLike: boolean }> = {};
   likeCountsArr.forEach((l: any) => {
     likeResults[l._id.toString()] = { likeCount: l.count, userLike: false };
   });
-  const userLikesArr = await Like.find({ targetId: { $in: postIds }, targetType: 'post', user: userId, isDeleted: false }).select('targetId');
-  userLikesArr.forEach((ul: any) => {
-    const postIdStr = ul.targetId.toString();
-    if (likeResults[postIdStr]) {
-      likeResults[postIdStr].userLike = true;
-    } else {
-      likeResults[postIdStr] = { likeCount: 0, userLike: true };
-    }
-  });
 
+  let userLikesArr: any[] = [];
+  if (userId) {
+    userLikesArr = await Like.find(
+      {
+        targetId:
+          { $in: postIds },
+        targetType: 'post',
+        user: userId,
+        isDeleted: false
+      }).select('targetId');
+    userLikesArr.forEach((ul: any) => {
+      const postIdStr = ul.targetId.toString();
+      if (likeResults[postIdStr]) {
+        likeResults[postIdStr].userLike = true;
+      } else {
+        likeResults[postIdStr] = { likeCount: 0, userLike: true };
+      }
+    });
+    // console.log('Like Results arr:', userLikesArr);
+
+  }
   // Followers count for all post users
   const userIds = posts.map((p: any) => p.user?._id).filter(Boolean);
   const followersArr = await Follow.aggregate([
@@ -74,7 +94,21 @@ export async function processPostsWithStats(posts: any[], userId: string) {
 
   // Follow/friend status for each post's user
   const postUserIds = posts.map((p: any) => p.user?._id?.toString()).filter(Boolean);
-  const followStatusMap = await getFollowStatusMap(userId, postUserIds);
+
+  let followStatusMap: Record<string, number> = {};
+
+  if (userId) {
+    followStatusMap = await getFollowStatusMap(userId, postUserIds);
+  } else {
+    // User is guest → assign 0 for all post user IDs
+    followStatusMap = postUserIds.reduce((acc, id) => {
+      acc[id] = 0;
+      return acc;
+    }, {} as Record<string, number>);
+  }
+
+  // console.log("followStatusMap", followStatusMap);
+
 
   return posts.map((post: any) => {
     const _id = post._id || post.postId;

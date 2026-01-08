@@ -16,7 +16,7 @@
  *         example: "64d123abcd456ef789012345"
  *       - in: query
  *         name: userId
- *         required: true
+ *         required: false
  *         schema:
  *           type: string
  *         description: Logged-in user's MongoDB ObjectId
@@ -76,24 +76,23 @@ import connectDB from '@/lib/db';
 import Store from '@/models/Store';
 import StoreView from '@/models/StoreView';
 import Product from '@/models/Product';
-import { is } from 'zod/locales';
 
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");           // logged-in user
+    let userId = searchParams.get("userId") ?? undefined;        // logged-in user
     const targetUserId = searchParams.get("targetUserId"); // owner of the store
     const storeId = searchParams.get("storeId");
 
     // 1️⃣ Validate query params
-    if (!userId || !targetUserId || !storeId) {
+    if (!targetUserId || !storeId) {
       return NextResponse.json(
         {
           data: {
             status: false,
-            message: "userId, targetUserId, and storeId are required"
+            message: "targetUserId and storeId are required"
           }
         },
         { status: 400 }
@@ -118,11 +117,13 @@ export async function GET(req: NextRequest) {
         { status: 404 }
       );
     }
-    // 2️⃣ Insert store view (one user = one view)
-    const existingView = await StoreView.findOne({ storeId, userId });
 
-    if (!existingView) {
-      await StoreView.create({ storeId, userId });
+    // 2️⃣ Insert store view (one user = one view)
+    if (userId) {
+      const existingView = await StoreView.findOne({ storeId, userId });
+      if (!existingView) {
+        await StoreView.create({ storeId, userId });
+      }
     }
 
     // 2️⃣ Count total views
@@ -143,7 +144,6 @@ export async function GET(req: NextRequest) {
       productCount: productCount || 0
     };
 
-    // 4️⃣ Determine ownership
 
     // 5️⃣ Response
     return NextResponse.json({

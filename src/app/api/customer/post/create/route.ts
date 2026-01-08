@@ -52,8 +52,8 @@
  *                       type: string
  *                       default: ""
  *                 example:
- *                   - imageUrl: "https://res.cloudinary.com/demo/image/upload/sample.jpg"
- *                     thumbUrl: "https://res.cloudinary.com/demo/image/upload/sample_thumb.jpg"
+ *                   - imageUrl: "http://res.cloudinary.com/drvxirfax/image/upload/v1767784450/users/profile/k76ta8f8hg0l9y8uwaa2.jpg"
+ *                     thumbUrl: "http://res.cloudinary.com/drvxirfax/image/upload/v1767784450/users/profile/k76ta8f8hg0l9y8uwaa2.jpg"
  *                     type: "image"
  *                     width: "1080"
  *                     height: "720"
