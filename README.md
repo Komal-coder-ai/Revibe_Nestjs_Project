@@ -1,10 +1,11 @@
 
 # Revibe - Next.js & NestJS Fullstack Platform
 
+
 A modern, modular full-stack application with:
 - **Next.js 15** (React 19, SSR, App Router)
 - **NestJS-style API** (modular, feature-based)
-- **MongoDB/Mongoose** for data
+- **PostgreSQL** via **Prisma ORM** for data
 - **Tailwind CSS** for UI
 - **Socket.io** for real-time features
 - **Swagger** for API docs
@@ -12,6 +13,7 @@ A modern, modular full-stack application with:
 - **Zod** for validation, **Zustand** for state, **Sonner** for notifications
 
 ## Overview
+
 This project powers a social platform with:
 - Admin dashboard (manage users, products, orders, settings)
 - Customer portal (login, onboarding, feed)
@@ -21,6 +23,7 @@ This project powers a social platform with:
 - Swagger UI at `/api-docs`
 
 ---
+
 
 ## Project Structure
 
@@ -33,13 +36,15 @@ This project powers a social platform with:
 ├── postcss.config.mjs              # PostCSS config for Tailwind
 ├── tailwind.config.ts              # Tailwind CSS config
 ├── tsconfig.json                   # TypeScript config
+├── prisma/
+│   └── schema.prisma               # Prisma schema (PostgreSQL)
 ├── scripts/                        # Utility scripts (hash passwords, seed DB)
 ├── public/                         # Static assets
 ├── src/
 │   ├── app/
 │   │   ├── globals.css             # Global styles
 │   │   ├── layout.tsx, page.tsx    # Root layout & landing
-│   │   ├── admin/                  # Admin dashboard UI
+│   │   ├── admin/                  # Admin dashboard UI, CRUD, social, livestream, components, Zustand store
 │   │   │   ├── dashboard/          # Admin dashboard pages
 │   │   │   ├── orders/, products/, users/, settings/ # CRUD UIs
 │   │   │   ├── Feed/, livestream/, login/            # Social & live features
@@ -52,13 +57,14 @@ This project powers a social platform with:
 │   │   ├── api-docs/               # Swagger UI & custom styles
 │   │   ├── customer/               # Customer login & onboarding
 │   │   └── socket/                 # Socket.io integration
-│   ├── common/                     # Shared logic (aggregation, stats)
+│   ├── common/                     # Shared logic (aggregation, stats, helpers)
 │   ├── lib/                        # Utility libraries (auth, db, cloudinary, jwt, mux, ...)
-│   └── models/                     # Mongoose models (User, Post, Comment, Vote, ...)
+│   └── models/                     # Data models (Prisma, legacy Mongoose)
 └── README.md                       # Project documentation
 ```
 
 ---
+
 
 ## Key Features
 - **Admin Dashboard**: Manage users, products, orders, settings
@@ -70,14 +76,16 @@ This project powers a social platform with:
 - **Cloudinary**: Media upload/delete
 - **Modular Structure**: Feature-based folders for scalability
 - **Zod, Zustand, Sonner**: Modern state, validation, notifications
+- **Prisma ORM**: Type-safe database access (PostgreSQL)
 
 ---
 
 ## Getting Started
 
+
 ### Prerequisites
 - Node.js (v18+ recommended)
-- MongoDB instance
+- PostgreSQL instance (set `DATABASE_URL` in `.env`)
 
 ### Installation
 1. Clone the repository:
@@ -89,8 +97,10 @@ This project powers a social platform with:
   ```sh
   npm install
   ```
+
 3. Configure environment variables:
   - Create a `.env` file in the root directory (see `.env.example` if available)
+  - Set your `DATABASE_URL` for PostgreSQL
 4. (Optional) Seed the database:
   ```sh
   node scripts/seedDatabase.js
@@ -112,7 +122,9 @@ This project powers a social platform with:
 ---
 
 
+
 ## Folder Details
+- **prisma/**: Prisma schema and migrations (PostgreSQL)
 - **src/app/admin/**: Admin dashboard UI, CRUD, social, livestream, components, Zustand store
 - **src/app/api/**: Modular API endpoints (admin/customer, feature-based)
 - **src/app/api-docs/**: Swagger UI and custom styles
@@ -120,7 +132,7 @@ This project powers a social platform with:
 - **src/app/socket/**: Real-time socket logic
 - **src/common/**: Shared logic (aggregation, stats, helpers)
 - **src/lib/**: Utility libraries (auth, db, cloudinary, jwt, mux, ...)
-- **src/models/**: Mongoose models (User, Post, Comment, Vote, ...)
+- **src/models/**: Data models (Prisma, legacy Mongoose)
 
 ---
 
@@ -137,10 +149,11 @@ This project powers a social platform with:
 ---
 
 
+
 ## Technologies Used
 - **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
 - **Backend**: Modular API (NestJS-style), Swagger, Zod
-- **Database**: MongoDB (Mongoose ODM)
+- **Database**: PostgreSQL (Prisma ORM)
 - **Real-time**: Socket.io
 - **Media**: Cloudinary
 - **State/Validation**: Zustand, Zod, Sonner
@@ -156,6 +169,7 @@ This project powers a social platform with:
 
 ---
 
+
 ## License
 [MIT](LICENSE)
 
@@ -167,32 +181,8 @@ For questions or support, please open an issue or contact the maintainer.
 
 ---
 
-## Getting Started
 
-### Prerequisites
-- Node.js (v18+ recommended)
-- MongoDB instance
-
-### Installation
-1. Clone the repository:
-  ```sh
-  git clone <repo-url>
-  cd Revibe_Nestjs_Project
-  ```
-2. Install dependencies:
-  ```sh
-  npm install
-  ```
-3. Configure environment variables:
-  - Create a `.env` file in the root directory (see `.env.example` if available)
-4. (Optional) Seed the database:
-  ```sh
-  node scripts/seedDatabase.js
-  ```
-5. Start the development server:
-  ```sh
-  npm run dev
-  ```
+---
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
@@ -229,6 +219,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - [ ] Session management with cookies
 
 ---
+
 
 ## License
 

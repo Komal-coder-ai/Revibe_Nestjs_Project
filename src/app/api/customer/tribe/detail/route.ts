@@ -55,7 +55,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ data: { status: false, message: 'tribeId is required' } }, { status: 400 });
     }
     const tribe = await Tribe.findOne({ _id: tribeId, isDeleted: false });
-    if (!tribe) return NextResponse.json({ data: { status: false, message: 'Tribe not found' } }, { status: 404 });
+    if (!tribe) return NextResponse.json(
+      {
+        data: {
+          status: false,
+          message: 'Tribe not found'
+        }
+      }, { status: 404 });
     if (tribe) {
       // Get member and post counts using utility functions
       const [memberCountMap, postCountMap] = await Promise.all([
@@ -87,9 +93,9 @@ export async function GET(req: NextRequest) {
             isOfficial: tribe.isOfficial,
             createdAt: tribe.createdAt,
             updatedAt: tribe.updatedAt,
-            memberCount,
-            postCount,
-            isJoined
+            memberCount: memberCount,
+            postCount: postCount,
+            isJoined: isJoined
           }
         }
       });
