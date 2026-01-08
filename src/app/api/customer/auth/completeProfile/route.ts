@@ -101,12 +101,9 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
+import Referral from '@/models/Referral';
 import { NextRequest } from 'next/server';
-// Update the import path below to the correct location of your schemas file
-// Update the path below to the actual location of your schemas file
 import { completeProfileSchema } from '@/app/api/customer/auth/validator/schemas';
-// If the above path is still incorrect, adjust it to the correct relative or absolute path where 'schemas.ts' exists.
-// If the above path is incorrect, adjust it to the actual path where 'schemas.ts' exists.
 
 // ...existing code...
 
@@ -126,15 +123,21 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     const { userId, name, username, email, bio, profileImage, coverImage, mobile, countryCode, referralCode } = parse.data;
 
-    // Validate referralCode if provided
+    // Validate referralCode if provided and record referral
     let referredBy = null;
     if (referralCode) {
       // Find user with this referralCode
       const referrer = await User.findOne({ referralCode });
       if (!referrer) {
-        return NextResponse.json({ data: { status: false, message: 'Invalid referral code' } }, { status: 400 });
+        return NextResponse.json({ data: { status: false, message: 'Invalid referral code' } },
+          { status: 400 });
       }
       referredBy = referrer._id;
+      // Check if referral already exists
+      const existingReferral = await Referral.findOne({ referredBy: referrer._id, referredUser: userId });
+      if (!existingReferral) {
+        await Referral.create({ referredBy: referrer._id, referredUser: userId });
+      }
     }
 
     // Check for unique username if provided

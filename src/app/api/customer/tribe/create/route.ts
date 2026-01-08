@@ -17,6 +17,13 @@ import { createTribeSchema } from '../validator/schema';
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - icon
+ *               - tribeName
+ *               - description
+ *               - category
+ *               - rules
+ *               - owner
  *             properties:
  *               icon:
  *                 type: object

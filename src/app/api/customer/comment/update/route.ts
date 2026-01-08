@@ -46,7 +46,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Comment from '@/models/Comment';
 import { commentIdSchema, updateCommentSchema } from '../validator/schemas';
-import connectDB  from '@/lib/db';
+import connectDB from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   await connectDB();
