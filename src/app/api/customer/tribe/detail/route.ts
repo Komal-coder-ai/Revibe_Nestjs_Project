@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
     await connectDB();
     const { searchParams } = new URL(req.url);
     let userId = searchParams.get('userId') ?? undefined;
-    const tribeId = searchParams.get('tribeId');
+    const tribeId = searchParams.get('tribeId'); // Required parameter
     if (!tribeId) {
       return NextResponse.json({ data: { status: false, message: 'tribeId is required' } }, { status: 400 });
     }
