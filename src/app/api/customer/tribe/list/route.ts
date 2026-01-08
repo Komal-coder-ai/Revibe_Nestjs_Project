@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
-
 /**
  * @swagger
  * /api/customer/tribe/list:
  *   get:
  *     summary: List or search tribes
- *     description: Retrieve a list of tribes, optionally filtered by a search query.
+ *     description: >
+ *       Retrieve a list of tribes with pagination, search, and join status.
+ *       Supports filtering by all tribes, joined tribes, and not joined tribes.
  *     tags:
  *       - Tribe
  *     parameters:
@@ -13,27 +13,44 @@ import { NextRequest, NextResponse } from 'next/server';
  *         name: userId
  *         schema:
  *           type: string
- *         required: true
- *         description: The user ID to filter tribes for
+ *         required: false
+ *         description: Logged-in user ID used to calculate join status
+ *
  *       - in: query
- *         name: q
+ *         name: search
  *         schema:
  *           type: string
  *         required: false
- *         description: Search query for tribe name
+ *         description: Search tribes by name (case-insensitive)
+ *
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: ["1", "2", "3"]
+ *           default: "1"
+ *         required: false
+ *         description: |
+ *           Tribe filter type:
+ *           1 = All tribes
+ *           2 = Joined tribes
+ *           3 = Not joined tribes
+ *
  *       - in: query
  *         name: cursor
  *         schema:
  *           type: string
  *         required: false
- *         description: The _id of the last tribe from the previous page
+ *         description: The _id of the last tribe from the previous page (cursor pagination)
+ *
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
+ *           default: 20
  *         required: false
  *         description: Number of tribes to return per page
- *         default: 20
+ *
  *     responses:
  *       200:
  *         description: Tribes fetched successfully
@@ -48,63 +65,169 @@ import { NextRequest, NextResponse } from 'next/server';
  *                     status:
  *                       type: boolean
  *                       example: true
+ *
  *                     tribes:
  *                       type: array
  *                       items:
  *                         type: object
  *                         properties:
+ *                           tribeId:
+ *                             type: string
+ *                             example: "65b8f1e6d3a9c9a9f1b1c123"
+ *                           tribeName:
+ *                             type: string
+ *                             example: "Developers Hub"
+ *                           description:
+ *                             type: string
+ *                             example: "A tribe for software developers"
+ *                           category:
+ *                             type: string
+ *                             example: "Technology"
+ *                           icon:
+ *                             type: string
+ *                             example: "https://cdn.example.com/icon.png"
+ *                           bannerImage:
+ *                             type: string
+ *                             example: "https://cdn.example.com/banner.png"
+ *                           rules:
+ *                             type: string
+ *                             example: "Be respectful"
+ *                           isPublic:
+ *                             type: boolean
+ *                             example: true
+ *                           isOfficial:
+ *                             type: boolean
+ *                             example: false
  *                           isJoined:
  *                             type: boolean
- *                             description: Whether the user has joined (is a follower of) the tribe
+ *                             description: Whether the user has joined the tribe
+ *                             example: true
+ *                           postCount:
+ *                             type: integer
+ *                             example: 25
+ *                           memberCount:
+ *                             type: integer
+ *                             example: 150
+ *                           createdAt:
+ *                             type: string
+ *                             format: date-time
+ *                           updatedAt:
+ *                             type: string
+ *                             format: date-time
+ *
  *                     nextCursor:
  *                       type: string
- *                       description: The cursor for the next page
+ *                       nullable: true
+ *                       description: Cursor value for fetching the next page
+ *
  *                     allTribesCount:
  *                       type: integer
- *                       description: Total number of tribes in the current query
+ *                       description: Total number of tribes
+ *                       example: 120
+ *
  *                     joinedTribesCount:
  *                       type: integer
- *                       description: Number of tribes joined by the user in the current page
+ *                       description: Total number of tribes joined by the user
+ *                       example: 10
+ *
  *                     notJoinedTribesCount:
  *                       type: integer
- *                       description: Number of tribes not joined by the user in the current page
+ *                       description: Total number of tribes not joined by the user
+ *                       example: 110
  */
+
+
+import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Tribe from '@/models/Tribe';
 import TribeMember from '@/models/TribeMember';
 import { getTribePostCounts, getTribeMemberCounts } from '@/common/tribeUtils';
 
-// List/search tribes
 export async function GET(req: NextRequest) {
   try {
-
     await connectDB();
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
-    if (!userId) {
-      return NextResponse.json({ data: { status: false, message: 'userId is required' } }, { status: 400 });
-    }
-    const q = searchParams.get('q') || '';
+
+    const userId = searchParams.get('userId') || undefined;
+    const search = searchParams.get('search') || '';
+    const type = searchParams.get('type') || '1'; // 1=all, 2=joined, 3=not joined
     const cursor = searchParams.get('cursor');
     const limit = parseInt(searchParams.get('limit') || '20', 10);
-    const filter: any = { isDeleted: { $ne: true } };
-    if (q) {
-      filter.tribeName = { $regex: q, $options: 'i' };
+
+    /* ----------------------------------------
+       BASE FILTER
+    ---------------------------------------- */
+    const tribeFilter: any = {
+      isDeleted: { $ne: true },
+    };
+
+    if (search) {
+      tribeFilter.tribeName = { $regex: search, $options: 'i' };
     }
+
     if (cursor) {
-      filter._id = { $gt: cursor };
+      tribeFilter._id = { $gt: cursor };
     }
-    const tribes = await Tribe.find(filter).sort({ _id: 1 }).limit(limit).lean();
-    // Get all tribe IDs
-    const tribeIds = tribes.map((tribe: any) => tribe._id);
-    // Find memberships for this user
-    const memberships = await TribeMember.find({ userId, tribeId: { $in: tribeIds } }).lean();
-    const joinedSet = new Set(memberships.map((m: any) => m.tribeId.toString()));
-    // Get post counts and member counts for each tribe using utility
+
+    /* ----------------------------------------
+       TYPE LOGIC
+    ---------------------------------------- */
+    let joinedIds: any[] = [];
+
+    if (userId) {
+      const joinedDocs = await TribeMember.find({ userId })
+        .select('tribeId')
+        .lean();
+      joinedIds = joinedDocs.map(d => d.tribeId);
+    }
+
+    if (type === '2') {
+      // Joined
+      if (!userId) {
+        return NextResponse.json({
+          data: {
+            status: true,
+            tribes: [],
+            nextCursor: null,
+            allTribesCount: await Tribe.countDocuments({ isDeleted: { $ne: true } }),
+            joinedTribesCount: 0,
+            notJoinedTribesCount: 0,
+          },
+        });
+      }
+
+      tribeFilter._id = {
+        ...(tribeFilter._id || {}),
+        $in: joinedIds.length ? joinedIds : [],
+      };
+    }
+
+    if (type === '3' && userId) {
+      tribeFilter._id = {
+        ...(tribeFilter._id || {}),
+        $nin: joinedIds,
+      };
+    }
+
+    /* ----------------------------------------
+       FETCH TRIBES
+    ---------------------------------------- */
+    const tribes = await Tribe.find(tribeFilter)
+      .sort({ _id: 1 })
+      .limit(limit)
+      .lean();
+
+    const tribeIds = tribes.map(t => t._id);
+
+    /* ----------------------------------------
+       MEMBERSHIP FLAG
+    ---------------------------------------- */
+    const joinedSet = new Set(joinedIds.map(id => id.toString()));
+
     const postCountMap = await getTribePostCounts(tribeIds);
     const memberCountMap = await getTribeMemberCounts(tribeIds);
 
-    const tribesWithJoined = tribes.map((tribe: any) => ({
+    const responseTribes = tribes.map((tribe: any) => ({
       tribeId: tribe._id,
       tribeName: tribe.tribeName,
       description: tribe.description,
@@ -113,34 +236,53 @@ export async function GET(req: NextRequest) {
       bannerImage: tribe.bannerImage,
       rules: tribe.rules,
       isPublic: tribe.isPublic,
+      isOfficial: tribe.isOfficial,
       createdAt: tribe.createdAt,
       updatedAt: tribe.updatedAt,
       isJoined: joinedSet.has(tribe._id.toString()),
-      isOfficial: tribe.isOfficial,
       postCount: postCountMap.get(tribe._id.toString()) || 0,
       memberCount: memberCountMap.get(tribe._id.toString()) || 0,
     }));
-    // Determine next cursor
-    const nextCursor = tribesWithJoined.length > 0 ? tribesWithJoined[tribesWithJoined.length - 1].tribeId : null;
 
-    // Calculate counts
-    const allTribesCount = await Tribe.countDocuments(filter);
-    const joinedTribesCount = tribesWithJoined.filter(t => t.isJoined).length;
-    const notJoinedTribesCount = tribesWithJoined.filter(t => !t.isJoined).length;
+    /* ----------------------------------------
+       CURSOR
+    ---------------------------------------- */
+    const nextCursor =
+      tribes.length > 0 ? tribes[tribes.length - 1]._id : null;
+
+    /* ----------------------------------------
+       COUNTS (GLOBAL)
+    ---------------------------------------- */
+    const allTribesCount = await Tribe.countDocuments({
+      isDeleted: { $ne: true },
+    });
+
+    const joinedTribesCount = userId
+      ? joinedIds.length
+      : 0;
+
+    const notJoinedTribesCount = userId
+      ? allTribesCount - joinedTribesCount
+      : allTribesCount;
 
     return NextResponse.json({
       data: {
         status: true,
-        tribes: tribesWithJoined,
+        tribes: responseTribes,
         nextCursor,
         allTribesCount,
         joinedTribesCount,
         notJoinedTribesCount,
-      }
+      },
     });
 
   } catch (error) {
-    console.error('Error fetching tribes:', error);
-    return NextResponse.json({ data: { status: false, message: error instanceof Error ? error.message : 'Error fetching tribes' } }, { status: 500 });
+    console.error(error);
+    return NextResponse.json(
+      { data: { status: false, message: 'Error fetching tribes' } },
+      { status: 500 }
+    );
   }
 }
+
+

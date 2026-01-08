@@ -13,7 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
  *         name: userId
  *         schema:
  *           type: string
- *         required: true
+ *         required: false
  *         description: The user ID to filter tribe for
  *       - in: query
  *         name: tribeId
@@ -41,28 +41,41 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Tribe from '@/models/Tribe';
 import { getTribeMemberCounts, getTribePostCounts } from '@/common/tribeUtils';
+import TribeMember from '@/models/TribeMember';
+
 
 // Get tribe details
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
-    const tribeId = searchParams.get('tribeId');
-    if (!userId) {
-      return NextResponse.json({ data: { status: false, message: 'userId is required' } }, { status: 400 });
-    }
+    let userId = searchParams.get('userId') ?? undefined;
+    const tribeId = searchParams.get('tribeId'); // Required parameter
     if (!tribeId) {
       return NextResponse.json({ data: { status: false, message: 'tribeId is required' } }, { status: 400 });
     }
     const tribe = await Tribe.findOne({ _id: tribeId, isDeleted: false });
-    if (!tribe) return NextResponse.json({ data: { status: false, message: 'Tribe not found' } }, { status: 404 });
+    if (!tribe) return NextResponse.json(
+      {
+        data: {
+          status: false,
+          message: 'Tribe not found'
+        }
+      }, { status: 404 });
     if (tribe) {
       // Get member and post counts using utility functions
       const [memberCountMap, postCountMap] = await Promise.all([
-        getTribeMemberCounts([tribe._id]), 
+        getTribeMemberCounts([tribe._id]),
         getTribePostCounts([tribe._id])
       ]);
+      let isJoined = false;
+      if (userId) {
+        isJoined = !!(await TribeMember.exists({
+          userId,
+          tribeId: tribe._id,
+        }));
+      }
+
       const memberCount = memberCountMap.get(tribe._id.toString()) || 0;
       const postCount = postCountMap.get(tribe._id.toString()) || 0;
       return NextResponse.json({
@@ -80,8 +93,9 @@ export async function GET(req: NextRequest) {
             isOfficial: tribe.isOfficial,
             createdAt: tribe.createdAt,
             updatedAt: tribe.updatedAt,
-            memberCount,
-            postCount
+            memberCount: memberCount,
+            postCount: postCount,
+            isJoined: isJoined
           }
         }
       });

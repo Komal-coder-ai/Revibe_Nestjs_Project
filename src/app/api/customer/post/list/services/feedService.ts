@@ -7,7 +7,7 @@ import Follow from '@/models/Follow';
 import { getBlockedAndReportedFilters } from '../filterBlockedAndReported';
 
 interface GetFeedPostsParams {
-    userId: string;
+    userId?: string;
     cursor?: string;
     cursorId?: string;
     limit?: number;
@@ -22,17 +22,28 @@ interface GetFeedPostsParams {
  * @returns Aggregated posts
  */
 export async function getFeedPosts({ userId, cursor, cursorId, limit = 10, type }: GetFeedPostsParams) {
+
     // Get followed user IDs (accepted only)
-    const following = await Follow.find({
-        user: userId,
-        status: 'accepted',
-        isDeleted: false
-    }).select('following');
-    const followingIds = following.map(f => f.following);
+    let followingIds: string[] = [];
+    if (userId) {
+        const following = await Follow.find({
+            user: userId,
+            status: 'accepted',
+            isDeleted: false
+        }).select('following');
+        followingIds = following.map(f => f.following);
+        // console.log('Following IDs:', followingIds);
+    }
+
 
     // Blocked users/posts
-    const { blockedUserIds, blockedPostIds } = await getBlockedAndReportedFilters(userId);
-
+    let blockedUserIds: string[] = [];
+    let blockedPostIds: string[] = [];
+    if (userId) {
+        ({ blockedUserIds, blockedPostIds } = await getBlockedAndReportedFilters(userId));
+    }
+    // console.log('Blocked User IDs:', blockedUserIds);
+    // console.log('Blocked Post IDs:', blockedPostIds);
 
     // Build filter for posts from followed users or public accounts, excluding blocked users
     // TODO: In the future, add logic here to select which public accounts' posts to show in the feed

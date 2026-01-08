@@ -37,8 +37,8 @@ import { createTribeSchema } from '../validator/schema';
  *                   format:
  *                     type: string
  *                 example:
- *                   imageUrl: "https://example.com/icon.jpg"
- *                   thumbUrl: "https://example.com/icon_thumb.jpg"
+ *                   imageUrl: "http://res.cloudinary.com/drvxirfax/image/upload/v1767784450/users/profile/k76ta8f8hg0l9y8uwaa2.jpg"
+ *                   thumbUrl: "http://res.cloudinary.com/drvxirfax/image/upload/v1767784450/users/profile/k76ta8f8hg0l9y8uwaa2.jpg"
  *                   type: "image"
  *                   width: "256"
  *                   height: "256"
@@ -75,8 +75,8 @@ import { createTribeSchema } from '../validator/schema';
  *                   format:
  *                     type: string
  *                 example:
- *                   imageUrl: "https://example.com/banner.jpg"
- *                   thumbUrl: "https://example.com/banner_thumb.jpg"
+ *                   imageUrl: "http://res.cloudinary.com/drvxirfax/image/upload/v1767784450/users/profile/k76ta8f8hg0l9y8uwaa2.jpg"
+ *                   thumbUrl: "http://res.cloudinary.com/drvxirfax/image/upload/v1767784450/users/profile/k76ta8f8hg0l9y8uwaa2.jpg"
  *                   type: "image"
  *                   width: "1920"
  *                   height: "480"

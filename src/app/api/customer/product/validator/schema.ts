@@ -26,8 +26,7 @@ export const ProductDeleteSchema = z.object({
 
 
 export const ProductListQuerySchema = z.object({
-    userId: z.string()
-        .min(1, "userId is required"),
+    userId: z.string().optional(),
     targetUserId: z.string()
         .min(1, "targetUserId is required"),
     storeId: z.string()
