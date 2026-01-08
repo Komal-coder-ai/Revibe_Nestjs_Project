@@ -114,6 +114,15 @@ export default function AdminLayout({
       ),
       path: '/admin/settings',
     },
+    {
+      name: 'Tribes',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm-2-8h4m-2-2v4" />
+        </svg>
+      ),
+      path: '/admin/tribe/list',
+    },
   ];
 
   return (

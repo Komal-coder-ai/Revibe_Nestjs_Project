@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import Admin from '@/models/Admin';
+import Admin from '../../../../../models/Admin';
 import { sendEmail } from '@/lib/email';
 import crypto from 'crypto';
 import connectDB from '@/lib/db';

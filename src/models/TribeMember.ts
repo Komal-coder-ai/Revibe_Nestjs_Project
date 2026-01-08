@@ -6,6 +6,8 @@ const TribeMemberSchema = new Schema({
     role: { type: String, enum: ['member', 'admin', 'owner'], default: 'member' },
     joinedAt: { type: Date, default: Date.now },
     isDeleted: { type: Boolean, default: false },
+    name: { type: String, required: true },
+    joinedDate: { type: Date, default: Date.now },
 }, {
     timestamps: true,
     indexes: [

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import DataTable, { TableColumn } from 'react-data-table-component';
-import '../admin/admin.css';
+// import '../admin.css';
 
 export interface TableAction {
   icon: React.ReactNode;
