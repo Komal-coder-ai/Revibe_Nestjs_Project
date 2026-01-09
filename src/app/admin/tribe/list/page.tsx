@@ -105,60 +105,82 @@ export default function TribeListPage() {
       name: 'Tribe ID',
       selector: (row: Tribe) => row.tribeId,
       sortable: true,
+      width: "230px",
       cell: (row: Tribe) => (
-        <Link href={`/admin/tribe/Detail/${row.tribeId}`} className="text-blue-500 underline">
+        // <Link href={`/admin/tribe/Detail/${row.tribeId}`} className="text-blue-500 underline">
+        //   {row.tribeId}
+        // </Link>
+        <Link
+          href={`/admin/tribe/Detail/${row.tribeId}`}
+          style={{ color: '#2563eb', textDecoration: 'none' }} // blue
+        >
           {row.tribeId}
         </Link>
       ),
     },
     {
       name: 'Tribe Name',
+      width: "150px",
       selector: (row: Tribe) => row.tribeName,
       sortable: true,
     },
     {
       name: 'Category',
+      width: "200px",
       selector: (row: Tribe) => row.category,
       sortable: true,
     },
     {
       name: 'Created Date',
+      width: "200px",
       selector: (row: Tribe) => row.createdDate,
       sortable: true,
     },
     {
       name: 'Created By',
+      width: "170px",
       selector: (row: Tribe) => row.createdBy,
       sortable: true,
     },
     {
       name: 'Total Members',
+      width: "170px",
       selector: (row: Tribe) => row.totalMembers,
       sortable: true,
     },
     {
-      name: 'Total Posts',
+      name: 'Total Posts', width: "170px",
       selector: (row: Tribe) => row.totalPosts,
       sortable: true,
     },
     {
       name: 'Icon',
+      width: "100px",
       cell: (row: Tribe) => (
-        <img
-          src={row.icon}
-          alt="Icon"
-          className="w-10 h-10 rounded-full object-cover border"
-        />
+        row.icon ? (
+          <img
+            src={row.icon}
+            alt="Icon"
+            className="w-10 h-10 rounded-full object-cover border"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center border text-gray-400 text-xs">No Icon</div>
+        )
       ),
     },
     {
       name: 'Cover Image',
+      width: "150px",
       cell: (row: Tribe) => (
-        <img
-          src={row.coverImage}
-          alt="Cover"
-          className="w-10 h-10 rounded object-cover border"
-        />
+        row.coverImage ? (
+          <img
+            src={row.coverImage}
+            alt="Cover"
+            className="w-10 h-10 rounded object-cover border"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center border text-gray-400 text-xs">No Cover</div>
+        )
       ),
     },
     {

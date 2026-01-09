@@ -170,12 +170,21 @@ export default function AdminFeedPage() {
         {
             name: 'Post ID',
             selector: (row) => row.postId,
-            cell: (row) => <Link href="#">{row.postId}</Link>,
-            width: '140px',
+              width:"220px",
+            cell: (row) => (
+                <Link
+                    href="#"
+                    style={{ color: '#2563eb', textDecoration: 'none' }} // blue
+                >
+                    {row.postId}
+                </Link>
+            ),
+            // width: '140px',
         },
         {
             name: 'Posted By',
             selector: (row) => row.user?.name || '-',
+             width: '140px',
         },
         {
             name: 'Type',
@@ -217,6 +226,8 @@ export default function AdminFeedPage() {
                         width={60}
                         height={60}
                         style={{
+                            width:"50px",
+                            height:"50px",padding:"10px",
                             objectFit: 'cover',
                             borderRadius: 6,
                             cursor: 'pointer',
@@ -237,6 +248,7 @@ export default function AdminFeedPage() {
         },
         {
             name: 'Comments',
+            width:"150px",
             selector: (row) => row.commentCount,
         },
         {

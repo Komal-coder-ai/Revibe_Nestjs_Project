@@ -74,31 +74,8 @@
 //         aadhar: '',
 //         username: demoUsername,
 //         isVerified: false,
-//         deviceId,
-//         referralCode
-//       });
-//     }
-//     // Generate tokens using ACCESS_TOKEN_SECRET for consistency
-//     const ACCESS_SECRET = process.env.ACCESS_TOKEN_SECRET || 'dev_access_secret';
-//     const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET || 'dev_refresh_secret';
-//     const accessToken = jwt.sign({ userId: user._id, userType: DEMO_USER_TYPE }, ACCESS_SECRET, { expiresIn: '1h' });
-//     const refreshToken = jwt.sign({ userId: user._id, userType: DEMO_USER_TYPE }, REFRESH_SECRET, { expiresIn: '7d' });
-//     user.refreshToken = refreshToken;
-//     await user.save();
-//     return NextResponse.json({
-//       data: {
-//         status: true,
-//         message: 'Demo user login successful',
-//         userId: user._id,
-//         accessToken,
-//         refreshToken,
-//         userType: DEMO_USER_TYPE,
-//         deviceId
-//       }
-//     });
-//   } catch (error) {
-//     console.log('Error in demo login:', error);
-//     const message = (error instanceof Error) ? error.message : 'Internal server error';
-//     return NextResponse.json({ data: { status: false, message } }, { status: 500 });
-//   }
-// }
+import { NextRequest, NextResponse } from 'next/server';
+import User from '@/models/User';
+import jwt from 'jsonwebtoken';
+// ...existing code...
+// (Remove duplicate/partial code)

@@ -117,7 +117,7 @@ export default function UsersPage() {
                 toast.success(data.message, {
                     duration: 3000,
                 });
-                
+
                 // Refresh the user list from API to get updated data
                 fetchUserList(searchTerm, page);
             } else {
@@ -125,7 +125,7 @@ export default function UsersPage() {
                 toast.error(data.message || 'Failed to update user status', {
                     duration: 3000,
                 });
-                
+
                 // Revert on error
                 setUsers(users.map(user =>
                     user.id === userId ? { ...user, statusLoading: false } : user
@@ -137,7 +137,7 @@ export default function UsersPage() {
             toast.error(error instanceof Error ? error.message : 'An unexpected error occurred', {
                 duration: 3000,
             });
-            
+
             console.error('Error updating user status:', error);
             // Revert on error
             setUsers(users.map(user =>
@@ -152,14 +152,22 @@ export default function UsersPage() {
             name: 'ID',
             selector: (row) => row.id,
             sortable: true,
+            width: '250px',
             cell: (row) => (
-                <Link href={`/admin/users/Detail/${row.id}`}>
+                // <Link href={`/admin/users/Detail/${row.id}`}>
+                //     {row.id}
+                // </Link>
+                <Link
+                    href={`/admin/users/Detail/${row.id}`}
+                    style={{ color: '#2563eb', textDecoration: 'none' }} // blue
+                >
                     {row.id}
                 </Link>
             ),
         },
         {
             name: 'Username',
+            width: '170px',
             selector: (row) => row.username || '',
             sortable: true,
             cell: (row) => <span>{row.username}</span>,
@@ -177,13 +185,23 @@ export default function UsersPage() {
         },
 
         {
+            name: 'Mobile',
+            selector: (row) => row.mobile || '',
+            sortable: true,
+            cell: (row) => <span>{row.mobile}</span>,
+            width: '150px',
+        },
+
+        {
             name: 'Email',
             selector: (row) => row.email,
             sortable: true,
             cell: (row) => <span>{row.email}</span>,
+            width: '250px',
         },
         {
             name: 'Profile Image',
+            width: '150px',
             selector: (row) => row.profileImage || '',
             sortable: true,
             cell: (row) => <span>
@@ -205,18 +223,20 @@ export default function UsersPage() {
 
         {
             name: 'Account Type',
+            width: '150px',
             selector: (row) => row.profileType,
             sortable: true,
             cell: (row) => <span>{row.profileType}</span>,
         },
         {
-            name: 'Aadhar',
+            name: 'Aadhar', width: '170px',
             selector: (row) => row.aadhar || '',
             sortable: true,
             cell: (row) => <span>{row.aadhar}</span>,
         },
         {
             name: 'Joined Date',
+            width: '140px',
             selector: (row) => row.joinedDate,
             sortable: true,
         },
