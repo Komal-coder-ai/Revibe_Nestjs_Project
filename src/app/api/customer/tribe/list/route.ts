@@ -141,6 +141,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Tribe from '@/models/Tribe';
 import TribeMember from '@/models/TribeMember';
+import TribeCategory from '@/models/TribeCategory';
 import { getTribePostCounts, getTribeMemberCounts } from '@/common/tribeUtils';
 
 export async function GET(req: NextRequest) {
@@ -212,10 +213,30 @@ export async function GET(req: NextRequest) {
     /* ----------------------------------------
        FETCH TRIBES
     ---------------------------------------- */
-    const tribes = await Tribe.find(tribeFilter)
-      .sort({ _id: 1 })
-      .limit(limit)
-      .lean();
+    // Use aggregation to join category details
+    const tribes = await Tribe.aggregate([
+      { $match: tribeFilter },
+      { $sort: { _id: -1 } }, // Latest first
+      { $limit: limit },
+      {
+        $lookup: {
+          from: 'tribecategories',
+          localField: 'category',
+          foreignField: '_id',
+          as: 'categoryDetails'
+        }
+      },
+      {
+        $addFields: {
+          category: { $arrayElemAt: ['$categoryDetails', 0] }
+        }
+      },
+      {
+        $project: {
+          categoryDetails: 0
+        }
+      }
+    ]);
 
     const tribeIds = tribes.map(t => t._id);
 
@@ -231,7 +252,10 @@ export async function GET(req: NextRequest) {
       tribeId: tribe._id,
       tribeName: tribe.tribeName,
       description: tribe.description,
-      category: tribe.category,
+      category: tribe.category && typeof tribe.category === 'object' ? {
+        id: tribe.category._id,
+        name: tribe.category.name
+      } : tribe.category,
       icon: tribe.icon,
       bannerImage: tribe.bannerImage,
       rules: tribe.rules,

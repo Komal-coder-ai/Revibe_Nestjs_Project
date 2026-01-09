@@ -62,7 +62,7 @@ import { createTribeSchema } from '../validator/schema';
  *               category:
  *                 type: string
  *                 description: Tribe category
- *                 example: "Nature"
+ *                 example: "695f7934790a92e6832755af"
  *               bannerImage:
  *                 type: object
  *                 description: Tribe banner image object (optional)
@@ -130,6 +130,7 @@ export async function POST(req: NextRequest) {
             }
         }, { status: 400 });
     }
+    
     const { icon, tribeName, description, category, bannerImage, rules, owner } = parse.data;
     // Validate owner id
     // Check if owner exists in User model

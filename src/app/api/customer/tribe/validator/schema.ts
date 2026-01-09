@@ -16,7 +16,7 @@ export const createTribeSchema = z.object({
   tribeName: z.string().min(1, 'tribeName is required'),
   description: z.string().optional(),
   category: z.string().min(1, 'category is required'),
-  bannerImage: imageObjectSchema.partial().optional(),
+  bannerImage: z.optional(imageObjectSchema.partial()),
   rules: z.string().optional(),
   owner: z.string().min(1, 'owner is required'),
 });
