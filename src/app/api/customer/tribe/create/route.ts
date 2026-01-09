@@ -97,9 +97,11 @@
  *                     }
  *                   ]
  *               rules:
- *                 type: string
- *                 description: Rules for the tribe (text)
- *                 example: "Be respectful. No spam."
+ *                 type: array
+ *                 description: Array of rules for the tribe
+ *                 items:
+ *                   type: string
+ *                 example: ["Be respectful.", "No spam."]
  *               owner:
  *                 type: string
  *                 description: User ID of tribe creator

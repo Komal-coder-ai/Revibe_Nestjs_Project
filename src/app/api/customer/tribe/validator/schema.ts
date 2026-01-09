@@ -18,7 +18,7 @@ export const createTribeSchema = z.object({
   description: z.string().optional(),
   category: z.string().min(1, 'category is required'),
   bannerImage: z.array(imageObjectSchema).optional(),
-  rules: z.string().optional(),
+  rules: z.array(z.string()).optional(),
   owner: z.string().min(1, 'owner is required'),
 });
 
@@ -28,6 +28,6 @@ export const updateTribeSchema = z.object({
   description: z.string().optional(),
   category: z.string().optional(),
   bannerImage: z.array(imageObjectSchema).optional(),
-  rules: z.string().optional(),
+  rules: z.array(z.string()).optional(),
   isPublic: z.boolean().optional(),
 });
