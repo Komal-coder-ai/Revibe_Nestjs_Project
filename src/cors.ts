@@ -3,8 +3,14 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Allow all origins for testing
-  const allowOrigin = '*';
+  // Allow only specific origins
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'https://revibe-nestjs-project.vercel.app',
+    'https://84f4ea7c0305.ngrok-free.app'
+  ];
+  const requestOrigin = request.headers.get('origin') || '';
+  const allowOrigin = allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0];
 
   // Handle CORS preflight
   if (request.method === 'OPTIONS') {
@@ -12,8 +18,6 @@ export function middleware(request: NextRequest) {
     response.headers.set('Access-Control-Allow-Origin', allowOrigin);
     response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    // Credentials cannot be used with wildcard origin
-    response.headers.delete('Access-Control-Allow-Credentials');
     return response;
   }
 
@@ -22,7 +26,6 @@ export function middleware(request: NextRequest) {
   response.headers.set('Access-Control-Allow-Origin', allowOrigin);
   response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
   response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  response.headers.delete('Access-Control-Allow-Credentials');
   return response;
 }
 
