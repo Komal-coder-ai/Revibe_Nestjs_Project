@@ -54,12 +54,41 @@ export async function GET(req: NextRequest) {
     if (!tribeId) {
       return NextResponse.json({ data: { status: false, message: 'tribeId is required' } }, { status: 400 });
     }
-    const tribe = await Tribe.findOne({ _id: tribeId, isDeleted: false });
+    // Validate ObjectId
+    let objectId;
+    try {
+      objectId = new (require('mongoose').Types.ObjectId)(tribeId);
+    } catch (e) {
+      return NextResponse.json({ data: { status: false, message: 'Invalid tribeId format' } }, { status: 400 });
+    }
+    // Use aggregation to fetch tribe and join category details
+    const tribeAgg = await Tribe.aggregate([
+      { $match: { _id: objectId, isDeleted: false } },
+      {
+        $lookup: {
+          from: 'tribecategories',
+          localField: 'category',
+          foreignField: '_id',
+          as: 'categoryDetails'
+        }
+      },
+      {
+        $addFields: {
+          category: { $arrayElemAt: ['$categoryDetails', 0] }
+        }
+      },
+      {
+        $project: {
+          categoryDetails: 0
+        }
+      }
+    ]);
+    const tribe = tribeAgg[0];
     if (!tribe) return NextResponse.json(
       {
         data: {
           status: false,
-          message: 'Tribe not found'
+          message: 'Tribe not found or may be deleted'
         }
       }, { status: 404 });
     if (tribe) {
@@ -85,7 +114,7 @@ export async function GET(req: NextRequest) {
             tribeId: tribe._id,
             tribeName: tribe.tribeName,
             description: tribe.description,
-            category: tribe.category,
+            category: tribe.category && typeof tribe.category === 'object' && tribe.category.name ? tribe.category.name : null,
             icon: tribe.icon,
             bannerImage: tribe.bannerImage,
             rules: tribe.rules,

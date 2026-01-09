@@ -2,28 +2,38 @@ import { Schema, model, models, Types } from 'mongoose';
 
 const TribeSchema = new Schema({
   icon: {
-    imageUrl: { type: String, required: true },
-    thumbUrl: { type: String },
-    type: { type: String },
-    width: { type: String },
-    height: { type: String },
-    orientation: { type: String },
-    format: { type: String },
+    type: [
+      {
+        imageUrl: { type: String, default: '' },
+        thumbUrl: { type: String, trim: true, default: '' },
+        type: { type: String, trim: true, default: '' },
+        width: { type: String, trim: true, default: '' },
+        height: { type: String, trim: true, default: '' },
+        orientation: { type: String, trim: true, default: '' },
+        format: { type: String, trim: true, default: '' },
+      }
+    ],
+    default: [],
   },
-  tribeName: { type: String, required: true, },
+  tribeName: { type: String, default: '' },
   description: { type: String, default: '' },
-  category: { type: String, required: true },
+  category: { type: Types.ObjectId, ref: 'TribeCategory' },
   bannerImage: {
-    imageUrl: { type: String },
-    thumbUrl: { type: String },
-    type: { type: String },
-    width: { type: String },
-    height: { type: String },
-    orientation: { type: String },
-    format: { type: String },
+    type: [
+      {
+        imageUrl: { type: String, default: '' },
+        thumbUrl: { type: String, trim: true, default: '' },
+        type: { type: String, trim: true, default: '' },
+        width: { type: String, trim: true, default: '' },
+        height: { type: String, trim: true, default: '' },
+        orientation: { type: String, trim: true, default: '' },
+        format: { type: String, trim: true, default: '' },
+      }
+    ],
+    default: [],
   },
   rules: { type: String, default: '' },
-  owner: { type: Types.ObjectId, ref: 'User',},
+  owner: { type: Types.ObjectId, ref: 'User', },
   isPublic: { type: Boolean, default: true },
   isOfficial: { type: Boolean, default: false },
   isDeleted: { type: Boolean, default: false },

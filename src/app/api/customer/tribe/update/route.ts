@@ -5,7 +5,7 @@ import { updateTribeSchema } from '../validator/schema';
 /**
  * @swagger
  * /api/customer/tribe/update:
- *   patch:
+ *   post:
  *     summary: Update tribe details
  *     description: Updates tribe details. Only owner or admin can update. All fields are optional; only provided fields will be updated. Prevents duplicate tribeName.
  *     tags:
@@ -28,31 +28,37 @@ import { updateTribeSchema } from '../validator/schema';
  *                 description: User ID of the requester (must be owner or admin)
  *                 example: "65a1234567890abcdef12345"
  *               icon:
- *                 type: object
- *                 description: Tribe icon object
- *                 properties:
- *                   imageUrl:
- *                     type: string
- *                   thumbUrl:
- *                     type: string
- *                   type:
- *                     type: string
- *                   width:
- *                     type: string
- *                   height:
- *                     type: string
- *                   orientation:
- *                     type: string
- *                   format:
- *                     type: string
+ *                 type: array
+ *                 description: Array of tribe icon objects
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     imageUrl:
+ *                       type: string
+ *                     thumbUrl:
+ *                       type: string
+ *                     type:
+ *                       type: string
+ *                     width:
+ *                       type: string
+ *                     height:
+ *                       type: string
+ *                     orientation:
+ *                       type: string
+ *                     format:
+ *                       type: string
  *                 example:
- *                   imageUrl: "http://res.cloudinary.com/drvxirfax/image/upload/v1767784450/users/profile/k76ta8f8hg0l9y8uwaa2.jpg"
- *                   thumbUrl: "http://res.cloudinary.com/drvxirfax/image/upload/v1767784450/users/profile/k76ta8f8hg0l9y8uwaa2.jpg"
- *                   type: "image"
- *                   width: "256"
- *                   height: "256"
- *                   orientation: "square"
- *                   format: "jpg"
+ *                   [
+ *                     {
+ *                       imageUrl: "http://res.cloudinary.com/demo/image/upload/v1/icon.jpg",
+ *                       thumbUrl: "http://res.cloudinary.com/demo/image/upload/v1/icon_thumb.jpg",
+ *                       type: "image",
+ *                       width: "256",
+ *                       height: "256",
+ *                       orientation: "square",
+ *                       format: "jpg"
+ *                     }
+ *                   ]
  *               tribeName:
  *                 type: string
  *                 description: Tribe name
@@ -63,34 +69,40 @@ import { updateTribeSchema } from '../validator/schema';
  *                 example: "A group for nature enthusiasts."
  *               category:
  *                 type: string
- *                 description: Tribe category
- *                 example: "Nature"
+ *                 description: Tribe category ID
+ *                 example: "65a1234567890abcdef12345"
  *               bannerImage:
- *                 type: object
- *                 description: Tribe banner image object (optional)
- *                 properties:
- *                   imageUrl:
- *                     type: string
- *                   thumbUrl:
- *                     type: string
- *                   type:
- *                     type: string
- *                   width:
- *                     type: string
- *                   height:
- *                     type: string
- *                   orientation:
- *                     type: string
- *                   format:
- *                     type: string
+ *                 type: array
+ *                 description: Array of tribe banner image objects (optional)
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     imageUrl:
+ *                       type: string
+ *                     thumbUrl:
+ *                       type: string
+ *                     type:
+ *                       type: string
+ *                     width:
+ *                       type: string
+ *                     height:
+ *                       type: string
+ *                     orientation:
+ *                       type: string
+ *                     format:
+ *                       type: string
  *                 example:
- *                   imageUrl: "http://res.cloudinary.com/drvxirfax/image/upload/v1767784450/users/profile/k76ta8f8hg0l9y8uwaa2.jpg"
- *                   thumbUrl: "http://res.cloudinary.com/drvxirfax/image/upload/v1767784450/users/profile/k76ta8f8hg0l9y8uwaa2.jpg"
- *                   type: "image"
- *                   width: "1920"
- *                   height: "480"
- *                   orientation: "landscape"
- *                   format: "jpg"
+ *                   [
+ *                     {
+ *                       imageUrl: "http://res.cloudinary.com/demo/image/upload/v1/banner.jpg",
+ *                       thumbUrl: "http://res.cloudinary.com/demo/image/upload/v1/banner_thumb.jpg",
+ *                       type: "image",
+ *                       width: "1920",
+ *                       height: "480",
+ *                       orientation: "landscape",
+ *                       format: "jpg"
+ *                     }
+ *                   ]
  *               rules:
  *                 type: string
  *                 description: Rules for the tribe (text)
@@ -114,7 +126,7 @@ import { updateTribeSchema } from '../validator/schema';
  *                       description: Updated tribe object
  */
 // Update tribe details
-export async function PATCH(req: NextRequest) {
+export async function POST(req: NextRequest) {
     await connectDB();
     const body = await req.json();
     const { tribeId, userId, ...updateBody } = body;
@@ -140,6 +152,14 @@ export async function PATCH(req: NextRequest) {
         const existing = await Tribe.findOne({ tribeName: update.tribeName, _id: { $ne: tribeId } });
         if (existing) {
             return NextResponse.json({ data: { status: false, message: 'A tribe with this name already exists.' } }, { status: 400 });
+        }
+    }
+    // If category is being updated, check if the category exists
+    if (update.category) {
+        const TribeCategory = (await import('@/models/TribeCategory')).default;
+        const categoryExists = await TribeCategory.findById(update.category);
+        if (!categoryExists) {
+            return NextResponse.json({ data: { status: false, message: 'Category not found' } }, { status: 400 });
         }
     }
     // Only allow updating allowed fields

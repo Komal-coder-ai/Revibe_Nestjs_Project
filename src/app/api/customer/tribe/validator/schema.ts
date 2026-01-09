@@ -11,22 +11,23 @@ export const imageObjectSchema = z.object({
 });
 
 
+
 export const createTribeSchema = z.object({
-  icon: imageObjectSchema,
+  icon: z.array(imageObjectSchema),
   tribeName: z.string().min(1, 'tribeName is required'),
   description: z.string().optional(),
   category: z.string().min(1, 'category is required'),
-  bannerImage: imageObjectSchema.partial().optional(),
+  bannerImage: z.array(imageObjectSchema).optional(),
   rules: z.string().optional(),
   owner: z.string().min(1, 'owner is required'),
 });
 
 export const updateTribeSchema = z.object({
-  icon: imageObjectSchema.optional(),
+  icon: z.array(imageObjectSchema).optional(),
   tribeName: z.string().optional(),
   description: z.string().optional(),
   category: z.string().optional(),
-  bannerImage: imageObjectSchema.partial().optional(),
+  bannerImage: z.array(imageObjectSchema).optional(),
   rules: z.string().optional(),
   isPublic: z.boolean().optional(),
 });
