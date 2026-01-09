@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
   const allowedOrigins = [
     'http://localhost:3000',
     'https://revibe-nestjs-project.vercel.app',
-    'https://84f4ea7c0305.ngrok-free.app'
+    ' https://96b6dbe2c5e4.ngrok-free.app'
   ];
   const requestOrigin = request.headers.get('origin') || '';
   const allowOrigin = allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0];
