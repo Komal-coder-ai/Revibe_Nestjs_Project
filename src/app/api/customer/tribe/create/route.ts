@@ -1,14 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/db';
-import Tribe from '@/models/Tribe';
-import { createTribeSchema } from '../validator/schema';
-
 /**
  * @openapi
  * /api/customer/tribe/create:
  *   post:
  *     summary: Create a new tribe
- *     description: Creates a new tribe (like a Facebook page) with icon, tribeName, description, category, bannerImage (optional), rules (text), and owner. Prevents duplicate tribeName.
+ *     description: Creates a new tribe with images, name, description, category, rules, and owner.
  *     tags:
  *       - Tribe
  *     requestBody:
@@ -26,31 +21,37 @@ import { createTribeSchema } from '../validator/schema';
  *               - owner
  *             properties:
  *               icon:
- *                 type: object
- *                 description: Tribe icon object
- *                 properties:
- *                   imageUrl:
- *                     type: string
- *                   thumbUrl:
- *                     type: string
- *                   type:
- *                     type: string
- *                   width:
- *                     type: string
- *                   height:
- *                     type: string
- *                   orientation:
- *                     type: string
- *                   format:
- *                     type: string
+ *                 type: array
+ *                 description: Array of tribe icon objects
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     imageUrl:
+ *                       type: string
+ *                     thumbUrl:
+ *                       type: string
+ *                     type:
+ *                       type: string
+ *                     width:
+ *                       type: string
+ *                     height:
+ *                       type: string
+ *                     orientation:
+ *                       type: string
+ *                     format:
+ *                       type: string
  *                 example:
- *                   imageUrl: "http://res.cloudinary.com/drvxirfax/image/upload/v1767784450/users/profile/k76ta8f8hg0l9y8uwaa2.jpg"
- *                   thumbUrl: "http://res.cloudinary.com/drvxirfax/image/upload/v1767784450/users/profile/k76ta8f8hg0l9y8uwaa2.jpg"
- *                   type: "image"
- *                   width: "256"
- *                   height: "256"
- *                   orientation: "square"
- *                   format: "jpg"
+ *                   [
+ *                     {
+ *                       imageUrl: "http://res.cloudinary.com/demo/image/upload/v1/icon.jpg",
+ *                       thumbUrl: "http://res.cloudinary.com/demo/image/upload/v1/icon_thumb.jpg",
+ *                       type: "image",
+ *                       width: "256",
+ *                       height: "256",
+ *                       orientation: "square",
+ *                       format: "jpg"
+ *                     }
+ *                   ]
  *               tribeName:
  *                 type: string
  *                 description: Tribe name
@@ -64,31 +65,37 @@ import { createTribeSchema } from '../validator/schema';
  *                 description: Tribe category
  *                 example: "695f7934790a92e6832755af"
  *               bannerImage:
- *                 type: object
- *                 description: Tribe banner image object (optional)
- *                 properties:
- *                   imageUrl:
- *                     type: string
- *                   thumbUrl:
- *                     type: string
- *                   type:
- *                     type: string
- *                   width:
- *                     type: string
- *                   height:
- *                     type: string
- *                   orientation:
- *                     type: string
- *                   format:
- *                     type: string
+ *                 type: array
+ *                 description: Array of tribe banner image objects (optional)
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     imageUrl:
+ *                       type: string
+ *                     thumbUrl:
+ *                       type: string
+ *                     type:
+ *                       type: string
+ *                     width:
+ *                       type: string
+ *                     height:
+ *                       type: string
+ *                     orientation:
+ *                       type: string
+ *                     format:
+ *                       type: string
  *                 example:
- *                   imageUrl: "http://res.cloudinary.com/drvxirfax/image/upload/v1767784450/users/profile/k76ta8f8hg0l9y8uwaa2.jpg"
- *                   thumbUrl: "http://res.cloudinary.com/drvxirfax/image/upload/v1767784450/users/profile/k76ta8f8hg0l9y8uwaa2.jpg"
- *                   type: "image"
- *                   width: "1920"
- *                   height: "480"
- *                   orientation: "landscape"
- *                   format: "jpg"
+ *                   [
+ *                     {
+ *                       imageUrl: "http://res.cloudinary.com/demo/image/upload/v1/banner.jpg",
+ *                       thumbUrl: "http://res.cloudinary.com/demo/image/upload/v1/banner_thumb.jpg",
+ *                       type: "image",
+ *                       width: "1920",
+ *                       height: "480",
+ *                       orientation: "landscape",
+ *                       format: "jpg"
+ *                     }
+ *                   ]
  *               rules:
  *                 type: string
  *                 description: Rules for the tribe (text)
@@ -115,6 +122,10 @@ import { createTribeSchema } from '../validator/schema';
  *                       type: object
  *                       description: Created tribe object
  */
+import { NextRequest, NextResponse } from 'next/server';
+import connectDB from '@/lib/db';
+import Tribe from '@/models/Tribe';
+import { createTribeSchema } from '../validator/schema';
 
 // Create a new tribe
 export async function POST(req: NextRequest) {
@@ -131,13 +142,24 @@ export async function POST(req: NextRequest) {
         }, { status: 400 });
     }
     
-    const { icon, tribeName, description, category, bannerImage, rules, owner } = parse.data;
+    let { icon, tribeName, description, category, bannerImage, rules, owner } = parse.data;
+    // Ensure icon and bannerImage are arrays to match Tribe model
+    // Ensure icon and bannerImage are arrays and have required properties
+    
     // Validate owner id
     // Check if owner exists in User model
     const User = (await import('@/models/User')).default;
     const ownerExists = await User.findById(owner);
     if (!ownerExists) {
         return NextResponse.json({ data: { status: false, message: 'Owner user not found' } }, { status: 400 });
+    }
+    // Validate category id
+    if (category) {
+        const TribeCategory = (await import('@/models/TribeCategory')).default;
+        const categoryExists = await TribeCategory.findById(category);
+        if (!categoryExists) {
+            return NextResponse.json({ data: { status: false, message: 'Category not found' } }, { status: 400 });
+        }
     }
     try {
         // Check for existing tribe with the same name
