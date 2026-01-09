@@ -32,7 +32,7 @@ const TribeSchema = new Schema({
     ],
     default: [],
   },
-  rules: { type: String, default: '' },
+  rules: { type: [String], default: [] },
   owner: { type: Types.ObjectId, ref: 'User', },
   isPublic: { type: Boolean, default: true },
   isOfficial: { type: Boolean, default: false },

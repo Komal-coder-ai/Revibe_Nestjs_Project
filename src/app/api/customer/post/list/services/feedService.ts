@@ -12,6 +12,7 @@ interface GetFeedPostsParams {
     cursorId?: string;
     limit?: number;
     type?: string;
+    hashtag?: string;
 }
 
 /**
@@ -21,7 +22,7 @@ interface GetFeedPostsParams {
  * @param limit - Number of posts to fetch
  * @returns Aggregated posts
  */
-export async function getFeedPosts({ userId, cursor, cursorId, limit = 10, type }: GetFeedPostsParams) {
+export async function getFeedPosts({ userId, cursor, cursorId, limit = 10, type, hashtag }: GetFeedPostsParams) {
 
     // Get followed user IDs (accepted only)
     let followingIds: string[] = [];
@@ -58,6 +59,10 @@ export async function getFeedPosts({ userId, cursor, cursorId, limit = 10, type 
     };
     if (type && type !== 'all') {
         baseMatch.type = type;
+    }
+    if (typeof hashtag === 'string' && hashtag.trim() !== '') {
+        // Assuming post has a hashtags array field
+        baseMatch.hashtags = hashtag;
     }
     if (cursor && cursorId) {
         // Use both createdAt and _id for pagination (descending order)

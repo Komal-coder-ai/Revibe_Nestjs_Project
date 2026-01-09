@@ -66,6 +66,7 @@ export async function getAggregatedPosts({ match, blockedUserIds = [], following
         username: '$userInfo.username',
         name: '$userInfo.name',
         profileImage: '$userInfo.profileImage',
+        isVerified: '$userInfo.isVerified',
       },
     },
   });

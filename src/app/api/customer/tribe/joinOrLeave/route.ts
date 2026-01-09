@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
 
         // Check if tribe exists and is not deleted
         const tribe = await Tribe.findOne({ _id: tribeId, isDeleted: { $ne: true } });
+        const existingMember = await TribeMember.findOne({ userId, tribeId });
         if (!tribe) {
             return NextResponse.json({
                 data: {
@@ -82,24 +83,19 @@ export async function POST(req: NextRequest) {
 
         if (type === 1) {
             // Check if already a member
-            const existing = await TribeMember.findOne({ userId, tribeId });
-            if (existing) {
-                return NextResponse.json(
-                    {
-                        data: {
-                            status: true,
-                            message: 'Already a member'
-                        }
-                    });
+            // const existing = await TribeMember.findOne({ userId, tribeId });
+            if (existingMember) {
+                await TribeMember.updateOne({ _id: existingMember._id }, { isDeleted: false });
+            } else {
+                await TribeMember.create({ userId, tribeId, role: 'member' });
             }
-            await TribeMember.create({ userId, tribeId, role: 'member' });
             return NextResponse.json({ data: { status: true, message: 'Joined tribe' } });
         } else if (type === 0) {
             // Soft delete membership if exists
-            const member = await TribeMember.findOne({ userId, tribeId, isDeleted: { $ne: true } });
-            if (member) {
-                member.isDeleted = true;
-                await member.save();
+            // const member = await TribeMember.findOne({ userId, tribeId });
+            if (existingMember) {
+                existingMember.isDeleted = true;
+                await existingMember.save();
                 return NextResponse.json(
                     {
                         data: {

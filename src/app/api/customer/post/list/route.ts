@@ -122,12 +122,14 @@ export async function GET(req: NextRequest) {
     let cursor = searchParams.get('cursor');
     let cursorId = searchParams.get('cursorId');
     const type = searchParams.get('type') || 'all';
+    let hashtag = searchParams.get('hashtag');
+    if (hashtag === null || hashtag === '' || hashtag === 'null') hashtag = '';
     if (cursor === '' || cursor === 'null' || cursor == null) cursor = null;
     if (cursorId === '' || cursorId === 'null' || cursorId == null) cursorId = null;
 
     // Always use feed logic
     const { getFeedPosts } = await import('./services/feedService');
-    const posts = await getFeedPosts({ userId: userId ?? undefined, cursor: cursor ?? undefined, cursorId: cursorId ?? undefined, limit, type });
+    const posts = await getFeedPosts({ userId: userId ?? undefined, cursor: cursor ?? undefined, cursorId: cursorId ?? undefined, limit, type, hashtag });
     const trending = await Hashtag.find({}).sort({ count: -1 }).limit(10).select('tag count -_id');
     const postsWithPollStats = await processPostsWithStats(posts, userId);
 

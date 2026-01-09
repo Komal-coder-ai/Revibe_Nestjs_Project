@@ -3,7 +3,7 @@ import Vote from '@/models/Vote';
 
 // Helper to add computed fields to posts (used for both feed, list, detail, etc.)
 export async function processPostsWithStats(posts: any[], userId?: string) {
-  const postIds = posts.map((p: any) => p._id || p.postId);
+  const postIds = posts.map((p: any) => p._id || p.postId).filter(Boolean);
   const [
     votes,
     commentCountsArr,
@@ -22,21 +22,24 @@ export async function processPostsWithStats(posts: any[], userId?: string) {
     (await import('@/models/Share')).default,
     // (await import('@/models/Vote')).default.find({ post: { $in: postIds }, user: userId })
   ]);
-  let userVotesArr: string[] = [];
+  let userVotesArr: { post: any, optionIndex: number }[] = [];
   if (userId) {
-    const votes = await Vote.find({ post: { $in: postIds }, user: userId }).select('post').lean();
-    userVotesArr = votes.map(v => v.post.toString());
+    const votes = await Vote.find({ post: { $in: postIds }, user: userId }).select('post optionIndex').lean();
+    userVotesArr = votes.map((v: any) => ({ post: v.post, optionIndex: v.optionIndex }));
   }
-  // console.log('Processing posts with stats:', userVotesArr);
   // Map of user's vote option for poll/quiz posts
-  const userVotesMap: Record<string, any> = {};
+  const userVotesMap: Record<string, number> = {};
   userVotesArr.forEach((v: any) => {
-    userVotesMap[v.post.toString()] = v.optionIndex;
+    if (v && v.post) {
+      userVotesMap[v.post.toString()] = v.optionIndex;
+    }
   });
 
   const commentCounts: Record<string, number> = {};
   commentCountsArr.forEach((c: any) => {
-    commentCounts[c._id.toString()] = c.count;
+    if (c && c._id) {
+      commentCounts[c._id.toString()] = c.count;
+    }
   });
 
   // Like counts and userLike
@@ -47,7 +50,9 @@ export async function processPostsWithStats(posts: any[], userId?: string) {
 
   const likeResults: Record<string, { likeCount: number, userLike: boolean }> = {};
   likeCountsArr.forEach((l: any) => {
-    likeResults[l._id.toString()] = { likeCount: l.count, userLike: false };
+    if (l && l._id) {
+      likeResults[l._id.toString()] = { likeCount: l.count, userLike: false };
+    }
   });
 
   let userLikesArr: any[] = [];
@@ -61,11 +66,13 @@ export async function processPostsWithStats(posts: any[], userId?: string) {
         isDeleted: false
       }).select('targetId');
     userLikesArr.forEach((ul: any) => {
-      const postIdStr = ul.targetId.toString();
-      if (likeResults[postIdStr]) {
-        likeResults[postIdStr].userLike = true;
-      } else {
-        likeResults[postIdStr] = { likeCount: 0, userLike: true };
+      if (ul && ul.targetId) {
+        const postIdStr = ul.targetId.toString();
+        if (likeResults[postIdStr]) {
+          likeResults[postIdStr].userLike = true;
+        } else {
+          likeResults[postIdStr] = { likeCount: 0, userLike: true };
+        }
       }
     });
     // console.log('Like Results arr:', userLikesArr);
@@ -79,7 +86,9 @@ export async function processPostsWithStats(posts: any[], userId?: string) {
   ]);
   const followersCountMap: Record<string, number> = {};
   followersArr.forEach((f: any) => {
-    followersCountMap[f._id.toString()] = f.count;
+    if (f && f._id) {
+      followersCountMap[f._id.toString()] = f.count;
+    }
   });
 
   // Share counts
@@ -89,11 +98,13 @@ export async function processPostsWithStats(posts: any[], userId?: string) {
   ]);
   const shareCounts: Record<string, number> = {};
   shareCountsArr.forEach((s: any) => {
-    shareCounts[s._id.toString()] = s.count;
+    if (s && s._id) {
+      shareCounts[s._id.toString()] = s.count;
+    }
   });
 
   // Follow/friend status for each post's user
-  const postUserIds = posts.map((p: any) => p.user?._id?.toString()).filter(Boolean);
+  const postUserIds = posts.map((p: any) => p.user && p.user._id ? p.user._id.toString() : '').filter(Boolean);
 
   let followStatusMap: Record<string, number> = {};
 
@@ -102,7 +113,7 @@ export async function processPostsWithStats(posts: any[], userId?: string) {
   } else {
     // User is guest → assign 0 for all post user IDs
     followStatusMap = postUserIds.reduce((acc, id) => {
-      acc[id] = 0;
+      if (id) acc[id] = 0;
       return acc;
     }, {} as Record<string, number>);
   }
@@ -119,16 +130,16 @@ export async function processPostsWithStats(posts: any[], userId?: string) {
     const shareCount = shareCounts[_id.toString()] || 0;
     // Add followersCount to user
     if (basePost.user && basePost.user._id) {
-      basePost.user.followersCount = followersCountMap[basePost.user._id.toString()] || 0;
+      basePost.user.followersCount = followersCountMap[basePost.user._id ? basePost.user._id.toString() : ''] || 0;
     }
     // Add userLike status for the current user
-    const userLike = likeResults[_id.toString()]?.userLike || false;
+    const userLike = likeResults[_id && _id.toString() ? _id.toString() : '']?.userLike || false;
     // Add isLoggedInUser flag
-    const isLoggedInUser = basePost.user && basePost.user._id && basePost.user._id.toString() === userId?.toString();
+    const isLoggedInUser = basePost.user && basePost.user._id && basePost.user._id.toString() === (userId ? userId.toString() : '');
     // Add follow/friend status code
-    const followStatusCode = basePost.user && basePost.user._id ? followStatusMap[basePost.user._id.toString()] ?? 0 : 0;
+    const followStatusCode = basePost.user && basePost.user._id ? followStatusMap[basePost.user._id ? basePost.user._id.toString() : ''] ?? 0 : 0;
     if ((post.type === 'poll' || post.type === 'quiz') && Array.isArray(post.options)) {
-      const postVotes = votes.filter((v: any) => v.post.toString() === _id.toString());
+      const postVotes = votes.filter((v: any) => v.post && _id && v.post.toString() === _id.toString());
       const totalVotes = postVotes.length;
       const optionCounts: Record<number, number> = {};
       postVotes.forEach((v: any) => {
@@ -143,7 +154,7 @@ export async function processPostsWithStats(posts: any[], userId?: string) {
           : 0
       }));
       // Add userVoted and userVoteOption
-      const voteOption = userVotesMap[_id.toString()];
+      const voteOption = userVotesMap[_id && _id.toString() ? _id.toString() : ''];
       const userVoted = voteOption !== undefined && voteOption !== null;
       const userVoteOption = userVoted ? voteOption : null;
       return { ...basePost, totalVotes, options: pollResults, commentCount, likeCount, shareCount, userLike, isLoggedInUser, followStatusCode, userVoted, userVoteOption };
