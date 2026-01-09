@@ -22,14 +22,13 @@ export async function processPostsWithStats(posts: any[], userId?: string) {
     (await import('@/models/Share')).default,
     // (await import('@/models/Vote')).default.find({ post: { $in: postIds }, user: userId })
   ]);
-  let userVotesArr: string[] = [];
+  let userVotesArr: { post: any, optionIndex: number }[] = [];
   if (userId) {
-    const votes = await Vote.find({ post: { $in: postIds }, user: userId }).select('post').lean();
-    userVotesArr = votes.map(v => v.post ? v.post.toString() : '').filter(Boolean);
+    const votes = await Vote.find({ post: { $in: postIds }, user: userId }).select('post optionIndex').lean();
+    userVotesArr = votes.map((v: any) => ({ post: v.post, optionIndex: v.optionIndex }));
   }
-  // console.log('Processing posts with stats:', userVotesArr);
   // Map of user's vote option for poll/quiz posts
-  const userVotesMap: Record<string, any> = {};
+  const userVotesMap: Record<string, number> = {};
   userVotesArr.forEach((v: any) => {
     if (v && v.post) {
       userVotesMap[v.post.toString()] = v.optionIndex;
