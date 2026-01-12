@@ -53,7 +53,10 @@ const UserSchema = new Schema(
     userType: { type: String, enum: ['original', 'demo'], default: 'original' },
     deviceId: { type: String, default: '' },
     referralCode: { type: String, default: '' },
-    referredBy: { type: Schema.Types.ObjectId, ref: 'User', default: null }
+    referredBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    // Track failed login attempts and lockout time
+    failedLoginAttempts: { type: Number, default: 0 },
+    lockoutUntil: { type: Date, default: null }
   },
   { timestamps: true }
 );

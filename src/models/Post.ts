@@ -3,7 +3,7 @@ import mongoose, { Schema } from 'mongoose';
 const PostSchema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: 'User' },
-    tribe: { type: Schema.Types.ObjectId, ref: 'Tribe' },
+    tribe: { type: Schema.Types.ObjectId, ref: 'Tribe', default: null },
     type: {
       type: String,
       enum: ['image', 'video', 'text', 'carousel', 'poll', 'quiz', 'reel'],

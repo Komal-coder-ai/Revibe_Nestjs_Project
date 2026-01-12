@@ -45,6 +45,7 @@ import { NextRequest } from 'next/server';
 // import Otp from '../../../../models/Otp';
 import { startOtpSchema } from '../validator/schemas';
 import { generateOTP, sendOtpMock } from '@/../../src/lib/otp';
+import { checkAndHandleLockout, handleFailedLogin } from '@/lib/authUtils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -80,7 +81,6 @@ export async function POST(request: NextRequest) {
     if (!user) {
       // Generate 10-digit hexadecimal referral code
       const referralCode = Array.from({ length: 10 }, () => Math.floor(Math.random() * 16).toString(16)).join('').toUpperCase();
-      // Defensive: ensure profileImage is always an array if provided as a string
       let userData: any = { countryCode, mobile, referralCode };
       if (typeof userData.profileImage === 'string') {
         userData.profileImage = [{ imageUrl: userData.profileImage }];
@@ -88,13 +88,31 @@ export async function POST(request: NextRequest) {
       user = await User.create(userData);
     }
 
+    // Check lockout status
+    // const lockout = await checkAndHandleLockout(user);
+    // if (lockout.locked) {
+    //   return NextResponse.json({
+    //     data: {
+    //       status: false,
+    //       message: lockout.message
+    //     }
+    //   }, { status: 429 });
+    // }
+
+    // Simulate login failure for demonstration (replace with your actual login validation)
+    // If login fails:
+    // await handleFailedLogin(user);
+    // return NextResponse.json({ data: { status: false, message: 'Invalid credentials' } }, { status: 401 });
+
+    // If login succeeds:
     const code = generateOTP();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
     user.otp = code;
     user.otpExpiresAt = expiresAt;
     await user.save();
     console.log('DEBUG: OTP set on user', { userId: user._id, otp: user.otp, otpExpiresAt: user.otpExpiresAt });
-    await sendOtpMock(countryCode, mobile, code);
+    // await sendOtpMock(countryCode, mobile, code);
+    // await handleFailedLogin(user);
 
     return NextResponse.json({
       data: {

@@ -50,6 +50,7 @@ import User from '@/models/User';
 import { NextRequest } from 'next/server';
 import { verifyOtpSchema } from '../validator/schemas';
 import { signAccessToken, signRefreshToken } from '@/lib/jwt';
+import { checkAndHandleLockout, handleFailedLogin, resetLoginAttempts } from '@/lib/authUtils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -97,6 +98,7 @@ export async function POST(request: NextRequest) {
     if (!user.otp || !user.otpExpiresAt || user.otp !== otp) {
       console.log('DEBUG: OTP mismatch or missing',
         { userOtp: user.otp, userOtpExpiresAt: user.otpExpiresAt, otpFromUser: otp });
+      // await handleFailedLogin(user);
       return NextResponse.json({
         data: {
           status: false,
@@ -107,6 +109,7 @@ export async function POST(request: NextRequest) {
     if (user.otpExpiresAt < new Date()) {
       console.log('DEBUG: OTP expired',
         { userOtpExpiresAt: user.otpExpiresAt, now: new Date() });
+      // await handleFailedLogin(user);
       return NextResponse.json({
         data: {
           status: false,
@@ -114,6 +117,7 @@ export async function POST(request: NextRequest) {
         }
       }, { status: 400 });
     }
+    // await resetLoginAttempts(user);
     user.otp = '';
     user.otpExpiresAt = null;
     user.isVerified = true;

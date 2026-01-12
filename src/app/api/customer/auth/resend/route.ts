@@ -43,6 +43,7 @@ import connectDB from '@/lib/db';
 import User from '@/models/User';
 import { startOtpSchema } from '../validator/schemas';
 import { generateOTP, sendOtpMock } from '@/../../src/lib/otp';
+import { checkAndHandleLockout,handleFailedLogin } from '@/lib/authUtils';
 
 export async function POST(request: Request) {
   try {
@@ -74,6 +75,20 @@ export async function POST(request: Request) {
         { status: 403 }
       );
     }
+
+    // Check lockout status
+    // const lockout = await checkAndHandleLockout(user);
+    // if (lockout.locked) {
+    //   return NextResponse.json({
+    //     data: {
+    //       status: false,
+    //       message: lockout.message
+    //     }
+    //   }, { status: 429 });
+    // }
+    // await handleFailedLogin(user);
+
+
     const code = generateOTP();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
     user.otp = code;
