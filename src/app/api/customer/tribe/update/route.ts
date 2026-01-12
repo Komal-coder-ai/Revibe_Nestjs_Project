@@ -62,7 +62,7 @@ import { updateTribeSchema } from '../validator/schema';
  *               tribeName:
  *                 type: string
  *                 description: Tribe name
- *                 example: "Nature Lovers"
+ *                 example: "65a1234567890abcdef12345"
  *               description:
  *                 type: string
  *                 description: Tribe description
@@ -131,24 +131,18 @@ import { updateTribeSchema } from '../validator/schema';
 export async function POST(req: NextRequest) {
     await connectDB();
     const body = await req.json();
-    const { tribeId, userId, ...updateBody } = body;
-    if (!tribeId) {
-        return NextResponse.json({ data: { status: false, message: 'Tribe id required' } }, { status: 400 });
+    // Validate the full body (including userId and tribeId)
+    const parse = updateTribeSchema.safeParse(body);
+    if (!parse.success) {
+        return NextResponse.json({ data: { status: false, message: 'Validation error', errors: parse.error.issues } }, { status: 400 });
     }
-    if (!userId) {
-        return NextResponse.json({ data: { status: false, message: 'userId is required for authorization' } }, { status: 400 });
-    }
+    const { tribeId, userId, ...update } = parse.data;
     // Check if user is owner or admin of the tribe
     const TribeMember = (await import('@/models/TribeMember')).default;
     const member = await TribeMember.findOne({ tribeId, userId });
     if (!member || (member.role !== 'owner' && member.role !== 'admin')) {
         return NextResponse.json({ data: { status: false, message: 'You are not authorized to update this tribe.' } }, { status: 403 });
     }
-    const parse = updateTribeSchema.safeParse(updateBody);
-    if (!parse.success) {
-        return NextResponse.json({ data: { status: false, message: 'Validation error', errors: parse.error.issues } }, { status: 400 });
-    }
-    const update = parse.data;
     // Prevent updating tribeName to a duplicate
     if (update.tribeName) {
         const existing = await Tribe.findOne({ tribeName: update.tribeName, _id: { $ne: tribeId } });
@@ -165,7 +159,7 @@ export async function POST(req: NextRequest) {
         }
     }
     // Only allow updating allowed fields
-    const allowedFields = ['icon', 'tribeName', 'description', 'category', 'bannerImage', 'rules'] as const;
+    const allowedFields = ['icon', 'tribeName', 'description', 'category', 'bannerImage', 'rules', 'isPublic'] as const;
     const updateData: Record<string, unknown> = {};
     for (const key of allowedFields) {
         if (Object.prototype.hasOwnProperty.call(update, key) && update[key] !== undefined) {
@@ -175,7 +169,11 @@ export async function POST(req: NextRequest) {
     try {
         const tribe = await Tribe.findByIdAndUpdate(tribeId, updateData, { new: true });
         if (!tribe) return NextResponse.json({ data: { status: false, message: 'Tribe not found' } }, { status: 404 });
-        return NextResponse.json({ data: { status: true, tribe } });
+        // Convert _id to tribeId in the response
+        const tribeObj = tribe.toObject ? tribe.toObject() : { ...tribe };
+        tribeObj.tribeId = tribeObj._id;
+        delete tribeObj._id;
+        return NextResponse.json({ data: { status: true, tribe: tribeObj } });
     } catch (error) {
         console.log('Error updating tribe:', error);
         return NextResponse.json({ data: { status: false, message: error instanceof Error ? error.message : 'Error updating tribe' } }, { status: 500 });

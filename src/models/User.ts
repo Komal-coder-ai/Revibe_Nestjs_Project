@@ -56,7 +56,17 @@ const UserSchema = new Schema(
     referredBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     // Track failed login attempts and lockout time
     failedLoginAttempts: { type: Number, default: 0 },
-    lockoutUntil: { type: Date, default: null }
+    lockoutUntil: { type: Date, default: null },
+    // Notification preferences
+    notificationSettings: {
+      pauseAll: { type: Boolean, default: false },
+      postLikes: { type: Boolean, default: true },
+      comments: { type: Boolean, default: true },
+      newFollowers: { type: Boolean, default: true },
+      directMessages: { type: Boolean, default: true },
+      email: { type: Boolean, default: false },
+      sms: { type: Boolean, default: false }
+    }
   },
   { timestamps: true }
 );
