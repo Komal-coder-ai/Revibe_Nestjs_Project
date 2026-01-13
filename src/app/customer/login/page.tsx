@@ -100,7 +100,7 @@ export default function CustomerLogin() {
         </form>
 
         <div className="mt-6 text-center">
-          <a href="/admin/login" className="text-purple-600 hover:text-purple-700 text-sm">
+          <a href="/login" className="text-purple-600 hover:text-purple-700 text-sm">
             Login as Admin
           </a>
         </div>

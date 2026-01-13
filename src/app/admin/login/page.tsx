@@ -29,11 +29,10 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (data.success) {
-        // Store admin data in localStorage (in production, use proper session management)
-        localStorage.setItem('admin', JSON.stringify(data.data));
-        
-        // Redirect to admin dashboard
-        router.push('/admin/dashboard');
+  // Store auth key in localStorage
+  localStorage.setItem('auth', data.data.token || 'true');
+  // Redirect to admin dashboard
+  router.push('/admin/dashboard');
       } else {
         setError(data.message || 'Login failed');
       }

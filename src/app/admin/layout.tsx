@@ -26,25 +26,18 @@ export default function AdminLayout({
   const [isLargeScreen, setIsLargeScreen] = useState(true);
 
   useEffect(() => {
-    // Skip layout for login page
-    if (pathname === '/admin/login') {
+    // Skip layout for /login route
+    if (pathname === '/login') {
       return;
     }
 
-    // Check if admin is logged in
-    const adminData = localStorage.getItem('admin');
-    if (!adminData) {
-      router.replace('/admin/login'); // Use replace to avoid adding to history stack
+    // Check if user is authenticated
+    const auth = localStorage.getItem('auth');
+    if (!auth) {
+      router.replace('/login');
       return;
     }
-
-    try {
-      const parsedAdmin = JSON.parse(adminData);
-      setAdmin(parsedAdmin);
-    } catch (error) {
-      console.error('Error parsing admin data:', error);
-      router.replace('/admin/login');
-    }
+    // Optionally, you can parse and set admin data if needed
   }, [pathname, router]);
 
   // Handle screen resize for responsive sidebar
@@ -66,8 +59,8 @@ export default function AdminLayout({
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('admin');
-    router.push('/');
+    localStorage.removeItem('auth');
+    router.push('/login');
   };
 
   const handleNavigation = (path: string) => {
