@@ -14,7 +14,7 @@
  *           type: string
  *           example: "65a1234567890abcdef12345"
  *       - in: query
- *         name: targetId
+ *         name: targetUserId
  *         required: true
  *         schema:
  *           type: string
@@ -85,21 +85,21 @@ export async function GET(req: NextRequest) {
         await connectDB();
         const { searchParams } = new URL(req.url);
         const userId = searchParams.get('userId'); // logged-in user
-        const targetId = searchParams.get('targetId'); // whose followers to fetch
+        const targetUserId = searchParams.get('targetUserId'); // whose followers to fetch
         const cursor = searchParams.get('cursor');
         const cursorId = searchParams.get('cursorId');
         const limit = parseInt(searchParams.get('limit') || '20', 10);
         const search = searchParams.get('search')?.trim() || '';
 
-        if (!userId || !targetId) return NextResponse.json({
+        if (!userId || !targetUserId) return NextResponse.json({
             data: {
-                status: false, message: 'userId and targetId required'
+                status: false, message: 'userId and targetUserId required'
             }
         },
             { status: 400 });
 
         const matchStage = {
-            following: new mongoose.Types.ObjectId(targetId),
+            following: new mongoose.Types.ObjectId(targetUserId),
             status: 'accepted',
             isDeleted: false
         };

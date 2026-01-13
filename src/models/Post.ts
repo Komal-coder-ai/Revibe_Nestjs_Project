@@ -1,9 +1,10 @@
 import mongoose, { Schema } from 'mongoose';
+import { string } from 'zod';
 
 const PostSchema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: 'User' },
-    tribe: { type: Schema.Types.ObjectId, ref: 'Tribe' },
+    tribe: { type: Schema.Types.ObjectId, ref: 'Tribe', default: null },
     type: {
       type: String,
       enum: ['image', 'video', 'text', 'carousel', 'poll', 'quiz', 'reel'],
@@ -18,6 +19,7 @@ const PostSchema = new Schema(
     // For quiz: index of correct answer (optional, for easier access)
     correctOption: { type: Number },
     postType: { type: Number },
+    shortcode: { type: String, default: '' },
     // ...existing code...  
     media: [
       {

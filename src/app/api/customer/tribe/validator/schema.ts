@@ -23,6 +23,8 @@ export const createTribeSchema = z.object({
 });
 
 export const updateTribeSchema = z.object({
+  userId: z.string().min(1, 'userId is required'),
+  tribeId: z.string().min(1, 'tribeId is required'),
   icon: z.array(imageObjectSchema).optional(),
   tribeName: z.string().optional(),
   description: z.string().optional(),
@@ -31,3 +33,4 @@ export const updateTribeSchema = z.object({
   rules: z.array(z.string()).optional(),
   isPublic: z.boolean().optional(),
 });
+
