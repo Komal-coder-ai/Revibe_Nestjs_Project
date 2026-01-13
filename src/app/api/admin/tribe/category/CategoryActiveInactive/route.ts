@@ -60,14 +60,18 @@ export async function PATCH(request: NextRequest) {
     try {
         await connectDB();
         const { categoryId, isActive } = await request.json();
+        console.log('Received PATCH request with body:', { categoryId, isActive });
         if (!categoryId || typeof isActive !== 'boolean') {
             return NextResponse.json({ success: false, message: 'categoryId and isActive are required.' }, { status: 400 });
         }
+    
+        console.log('Updating categoryId:', categoryId, 'to isActive:', isActive);
         const updated = await TribeCategory.findByIdAndUpdate(
             categoryId,
             { isActive: isActive },
             { new: true }
         );
+        console.log('Update result:', updated);
         if (!updated) {
             return NextResponse.json({ success: false, message: 'Category not found.' }, { status: 404 });
         }

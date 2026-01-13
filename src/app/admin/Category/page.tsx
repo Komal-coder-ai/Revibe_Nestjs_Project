@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react';
+import Switch from '@mui/material/Switch';
 // import DataTable from '../users/DataTable';
 import { TableColumn } from 'react-data-table-component';
 import { Button } from '@mui/material';
@@ -69,6 +70,27 @@ export default function CategoryList() {
     setModalOpen(true);
   };
 
+  const handleStatusChange = async (category: Category) => {
+    const categoryId = category._id;
+    // Toggle status: if currently active (1), set to inactive (false); if inactive (0), set to active (true)
+    const isActive = category.active === 0;
+    try {
+      const res = await fetch('/api/admin/tribe/category/CategoryActiveInactive', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoryId, isActive })
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchCategoryList(searchTerm, page);
+      } else {
+        alert(data.message || 'Failed to update status');
+      }
+    } catch (err) {
+      alert('Error updating status');
+    }
+  };
+
   const columns: TableColumn<Category>[] = [
     {
       name: 'ID',
@@ -90,6 +112,17 @@ export default function CategoryList() {
       name: 'Status',
       selector: (row) => row.active === 1 ? 'Active' : 'Inactive',
       sortable: true,
+      cell: (row) => (
+        <div className="flex items-center gap-2">
+          <Switch
+            checked={row.active === 1}
+            onChange={() => handleStatusChange(row)}
+            color="primary"
+            inputProps={{ 'aria-label': 'toggle category status' }}
+          />
+          <span>{row.active === 1 ? 'Active' : 'Inactive'}</span>
+        </div>
+      ),
     },
   ];
 

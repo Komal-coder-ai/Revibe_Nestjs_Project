@@ -1,3 +1,8 @@
+// Support PUT as an alias for PATCH
+export async function PUT(request: NextRequest) {
+	// Delegate to PATCH handler
+	return PATCH(request);
+}
 
 /**
  * @swagger
@@ -67,7 +72,15 @@ export async function PATCH(request: NextRequest) {
 		if (!updated) {
 			return NextResponse.json({ success: false, message: 'Tribe not found.' }, { status: 404 });
 		}
-		return NextResponse.json({ success: true, message: 'Tribe status updated.', data: { _id: updated._id, isDeleted: updated.isDeleted } });
+				return NextResponse.json({
+					success: true,
+					message: 'Tribe status updated.',
+					data: {
+						_id: updated._id,
+						isDeleted: updated.isDeleted,
+						active: updated.isDeleted ? 0 : 1
+					}
+				});
 	} catch (error) {
 		console.error('Error updating tribe status:', error);
 		return NextResponse.json({ success: false, message: 'Failed to update tribe status', error: error instanceof Error ? error.message : String(error) }, { status: 500 });
