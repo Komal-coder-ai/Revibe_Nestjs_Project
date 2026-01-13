@@ -11,3 +11,15 @@ function getFolderLocation(type: number): string {
   }
 }
 export { getFolderLocation };
+
+
+export function generateShortcodeForPost(length = 10): string {
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  let code = '';
+
+  for (let i = 0; i < length; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+
+  return code;
+}

@@ -129,6 +129,7 @@ import Post from '@/models/Post';
 import { createPostSchema } from '../validator/schemas';
 import { extractHashtags } from '@/lib/hashtag';
 import Hashtag from '@/models/Hashtag';
+import {generateShortcodeForPost} from '@/common/common';
 
 // POST /api/post/create - Create a new post
 export async function POST(req: NextRequest) {
@@ -154,6 +155,7 @@ export async function POST(req: NextRequest) {
         );
       }
     }
+    let shortcode = generateShortcodeForPost();
     // Ensure options is array of objects with text field for poll/quiz
     let formattedOptions = options;
     let formattedCorrectOption = correctOption;
@@ -172,8 +174,10 @@ export async function POST(req: NextRequest) {
         }
       }
     }
+    
     const post = await Post.create({
       user: userId,
+      shortcode: shortcode,
       type,
       media: media || [],
       text: text || '',

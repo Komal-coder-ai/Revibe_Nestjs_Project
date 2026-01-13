@@ -165,9 +165,13 @@ export async function PATCH(req: Request) {
     if (name) update.name = name;
     if (mobile) update.mobile = mobile;
     if (countryCode) update.countryCode = countryCode;
-    if (username) update.username = username;
+    if (username !== undefined) {
+      update.username = username; // allows ""
+    }
     if (email) update.email = email;
-    if (bio) update.bio = bio;
+    if (bio !== undefined) {
+      update.bio = bio; // allows ""
+    }
     if (profileImage) {
       if (typeof profileImage === 'string') {
         try {
