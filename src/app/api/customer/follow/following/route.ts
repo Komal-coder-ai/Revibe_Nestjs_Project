@@ -86,10 +86,14 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId'); // logged-in user
     const targetId = searchParams.get('targetUserId'); // whose following list to fetch
-    const cursor = searchParams.get('cursor');
-    const cursorId = searchParams.get('cursorId');
+    let cursor = searchParams.get('cursor');
+    let cursorId = searchParams.get('cursorId');
     const limit = parseInt(searchParams.get('limit') || '20', 10);
-    const search = searchParams.get('search')?.trim() || '';
+    let search = searchParams.get('search')?.trim() || '';
+    if (search === '' || search === "null" || search == null) search = "";
+    if (cursor === '' || cursor === "null" || cursor == null) cursor = null;
+    if (cursorId === '' || cursorId === "null" || cursorId == null) cursorId = null;
+
     if (!userId || !targetId) return NextResponse.json({ data: { status: false, message: 'userId and targetId required' } }, { status: 400 });
     if (!/^[a-fA-F0-9]{24}$/.test(targetId)) {
       return NextResponse.json({ data: { status: false, message: 'Invalid targetId format' } }, { status: 400 });
@@ -101,7 +105,10 @@ export async function GET(req: NextRequest) {
         isDeleted: false
       };
       const searchStage = search
-        ? [{ $match: { 'followingUser.username': { $regex: search, $options: 'i' } } }]
+        ? [{ $match: { $or: [
+            { 'followingUser.username': { $regex: search, $options: 'i' } },
+            { 'followingUser.name': { $regex: search, $options: 'i' } },
+        ] } }]
         : [];
       let cursorFilter: PipelineStage[] = [];
       if (cursor && cursorId) {

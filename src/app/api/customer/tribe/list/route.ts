@@ -148,13 +148,14 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
     const { searchParams } = new URL(req.url);
-
+console.log('Received request with params:', searchParams);
     const userId = searchParams.get('userId') || undefined;
     let search = searchParams.get('search') || '';
-    if (search === '""') search = '';
+    if (search === "''" || search === 'null' || search == null ) search = '';
     const type = searchParams.get('type') || '1'; // 1=all, 2=joined, 3=not joined
     let cursor = searchParams.get('cursor');
-    if (cursor === '' || cursor === '""') cursor = null;
+    console.log('Parsed parameters:', { search, type ,cursor});
+    if (cursor === "''" || cursor === 'null' || cursor == null) cursor = null;
     const limit = parseInt(searchParams.get('limit') || '20', 10);
 
     /* ----------------------------------------
