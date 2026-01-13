@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     // await handleFailedLogin(user);
 
 
-// ******************** move this later when user create profile *********************
+    // ******************** move this later when user create profile *********************
     await NotificationSettings.findOneAndUpdate(
       { userId: user._id },
       {},
