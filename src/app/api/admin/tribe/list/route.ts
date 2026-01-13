@@ -3,6 +3,7 @@ import Tribe from '@/models/Tribe';
 import User from '@/models/User';
 import TribeMember from '@/models/TribeMember';
 import Post from '@/models/Post';
+import TribeCategory from '@/models/TribeCategory';
 import connectDB from '@/lib/db';
 
 export async function POST(req: NextRequest) {
@@ -11,6 +12,10 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const { limit = 10, offset = 0 } = body;
+
+
+    // Get total count for pagination
+    const total = await Tribe.countDocuments({ isDeleted: { $ne: true } });
 
     const tribes = await Tribe.find({ isDeleted: { $ne: true } })
       .skip(offset)
@@ -44,10 +49,18 @@ export async function POST(req: NextRequest) {
     const tribeList = await Promise.all(
       tribes.map(async (tribe: any) => {
         const createdBy = await User.findById(tribe.owner).select('name _id');
+        let categoryName = '';
+        if (tribe.category) {
+          const categoryDoc = await TribeCategory.findById(tribe.category).select('name');
+          categoryName = categoryDoc ? categoryDoc.name : '';
+        }
+        // Return all fields from the tribe document, plus computed fields
         return {
+          ...tribe,
           tribeId: tribe._id,
           tribeName: tribe.tribeName,
           category: tribe.category,
+          categoryName,
           createdDate: tribe.createdAt,
           createdBy: createdBy ? createdBy.name || createdBy._id : 'Unknown',
           totalMembers: memberCountMap.get(tribe._id.toString()) || 0,
@@ -59,7 +72,12 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    return NextResponse.json({ data: tribeList });
+    return NextResponse.json({
+      data: tribeList,
+      total,
+      limit,
+      offset
+    });
   } catch (error) {
     console.error('Error fetching tribe list:', error);
     return NextResponse.json({ error: 'Failed to fetch tribe list' }, { status: 500 });

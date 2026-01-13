@@ -19,7 +19,9 @@ import {
   Container,
   Stack,
   Grid,
+  Skeleton,
 } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import {
   ShoppingBag,
   Star,
@@ -44,6 +46,8 @@ import {
   PeopleAlt,
 } from '@mui/icons-material';
 import AdminFeedPage from '@/app/admin/Feed/page';
+import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
+
 
 interface UserDetail {
   id: string;
@@ -200,56 +204,102 @@ export default function UserDetailPage() {
     <Box sx={{ minHeight: '100vh', bgcolor: '#f9fafb', py: 3 }}>
       <Container maxWidth="lg">
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '500px' }}>
-            <Stack alignItems="center" spacing={2}>
-              <CircularProgress />
-              <Typography color="textSecondary">Loading user details...</Typography>
-            </Stack>
-          </Box>
-        ) : userDetails ? (
-
-          <>
-
-
-            <Stack spacing={3}>
-              {/* Header with Back Button */}
-              {/* <Button
-              startIcon={<ArrowBack />}
-              onClick={() => router.back()}
-              sx={{ alignSelf: 'flex-start', mb: 1 }}
-            >
-              Back
-            </Button> */}
-
-              {/* User Header Card */}
-              <Card sx={{ p: 3 }}>
-                <Grid container spacing={3} alignItems="flex-start">
-                  <Grid component="div">
-                  <Avatar
-                    sx={{
-                      width: 80,
-                      height: 80,
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      fontSize: '2rem',
-                      fontWeight: 'bold',
-                    }}
-                    src={userDetails.profileImage}
-                  >
-                    {userDetails.name && userDetails.name !== 'N/A'
-                      ? userDetails.name.charAt(0).toUpperCase()
-                      : '?'}
-                  </Avatar>
+          <Stack spacing={3}>
+            {/* Header Skeleton */}
+            <Card sx={{ p: 3 }}>
+              <Grid container spacing={3} alignItems="center">
+                <Grid item>
+                  <Skeleton variant="circular" width={80} height={80} />
                 </Grid>
-                  <Grid component="div">
-                    <Stack spacing={1}>
-                      <Typography variant="h5" component="div" sx={{ fontWeight: 'bold' }}>
-                         {userDetails.name && userDetails.name !== 'N/A' ? userDetails.name : '-'}
+                <Grid item xs>
+                  <Skeleton width="40%" height={32} />
+                  <Skeleton width="30%" height={20} />
+                  <Stack direction="row" spacing={1} mt={1}>
+                    <Skeleton width={70} height={24} />
+                    <Skeleton width={70} height={24} />
+                  </Stack>
+                </Grid>
+                <Grid item>
+                  <Skeleton width={120} height={20} />
+                  <Skeleton width={80} height={20} />
+                </Grid>
+              </Grid>
+            </Card>
 
+            {/* Tabs Skeleton */}
+            <Card>
+              <Box px={4} py={2} display="flex" gap={3}>
+                <Skeleton width={140} height={32} />
+                <Skeleton width={140} height={32} />
+              </Box>
+
+              <Box p={3}>
+                {/* Stats Skeleton */}
+                {/* <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <Skeleton height={120} />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Skeleton height={120} />
+          </Grid>
+        </Grid> */}
+
+                {/* Info Cards Skeleton */}
+                <Stack spacing={3} mt={4}>
+                  <Skeleton height={200} />
+                  <Skeleton height={180} />
+                </Stack>
+              </Box>
+            </Card>
+          </Stack>
+        ) : userDetails ? (
+          <>
+            <Stack spacing={3}>
+
+              <Card sx={{ p: 3 }}>
+                <Grid
+                  container
+                  spacing={3}
+                // alignItems="center"
+                >
+
+                  {/* LEFT : Back + Avatar */}
+                  <Grid item xs={12} sm={'auto'}>
+                    <Stack direction="row" spacing={2} >
+                      <KeyboardArrowLeftIcon sx={{ cursor: 'pointer' }} onClick={() => router.back()} />
+
+                      <Avatar
+                        sx={{
+                          width: 80,
+                          height: 80,
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          fontSize: '2rem',
+                          fontWeight: 'bold',
+                        }}
+                        src={userDetails.profileImage}
+                      >
+                        {userDetails.name && userDetails.name !== 'N/A'
+                          ? userDetails.name.charAt(0).toUpperCase()
+                          : '?'}
+                      </Avatar>
+                    </Stack>
+                  </Grid>
+
+                  {/* CENTER : User Info */}
+                  <Grid item xs>
+                    <Stack spacing={0.5} justifyContent="center">
+                      <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+                        {userDetails.name && userDetails.name !== 'N/A'
+                          ? userDetails.name
+                          : '-'}
                       </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        {/* {userDetails.username} */}
-                             {userDetails.username && userDetails.username !== 'N/A' ? userDetails.username : '-'}
+
+                      <Typography variant="body2" color="text.secondary">
+                        {userDetails.username && userDetails.username !== 'N/A'
+                          ? userDetails.username
+                          : '-'}
                       </Typography>
+
                       <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
                         <Chip
                           label={userDetails.status === 1 ? 'Active' : 'Inactive'}
@@ -267,18 +317,25 @@ export default function UserDetailPage() {
                       </Stack>
                     </Stack>
                   </Grid>
-                  <Grid component="div">
-                    <Stack alignItems="flex-end">
-                      <Typography variant="caption" color="textSecondary">
+
+                  {/* RIGHT : Member Since (push to end) */}
+                  <Grid
+                    item
+                    sx={{ ml: 'auto' }}   // ✅ pushes to extreme right
+                  >
+                    <Stack alignItems="flex-end" justifyContent="center">
+                      <Typography variant="caption" color="text.secondary">
                         Member Since
                       </Typography>
                       <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                        {userDetails.joinedDate}
+                        {userDetails.joinedDate || '-'}
                       </Typography>
                     </Stack>
                   </Grid>
+
                 </Grid>
               </Card>
+
 
               {/* Tabs Card */}
               <Card>
@@ -437,7 +494,7 @@ export default function UserDetailPage() {
                                   sx={{ fontWeight: 700, color: '#525252' }}
                                 >
                                   {field.label}
-                                  
+
                                 </Typography>
                               </Stack>
 
@@ -454,7 +511,7 @@ export default function UserDetailPage() {
                                 }}
                               >
                                 {/* {field.value} */}
-                                     {field.value && field.value !== 'N/A' ? field.value : '-'}
+                                {field.value && field.value !== 'N/A' ? field.value : '-'}
                               </Typography>
                             </Box>
                           ))}
@@ -553,7 +610,7 @@ export default function UserDetailPage() {
                               }}
                             >
                               {/* {field.value} */}
-                                   {field.value && field.value !== 'N/A' ? field.value : '-'}
+                              {field.value && field.value !== 'N/A' ? field.value : '-'}
                             </Typography>
                           </Box>
                         ))}
@@ -568,7 +625,7 @@ export default function UserDetailPage() {
 
                 {/* Activity Feed Tab */}
                 <TabPanel value={tabValue} index={1}>
-            <AdminFeedPage />
+                  <AdminFeedPage />
                 </TabPanel>
               </Card>
             </Stack>

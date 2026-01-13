@@ -95,12 +95,12 @@ export default function CategoryList() {
 
   return (
     <div>
-      <div className="flex justify-between items-center w-full mb-4">
+      {/* <div className="flex justify-between items-center w-full mb-4">
         <span className="text-xl font-bold">Category List</span>
-        <Button variant="contained" color="primary" onClick={handleAdd}>Add Category</Button>
-      </div>
+        <Button variant="contained" color="primary" onClick={handleAdd}  sx={{ textTransform: 'none' }}>Add Category</Button>
+      </div> */}
       <DataTable
-        title=""
+        title="Category List"
         columns={columns}
         data={categories}
         searchPlaceholder="Search categories by name..."
@@ -113,6 +113,9 @@ export default function CategoryList() {
         striped={true}
         highlightOnHover={true}
         loading={loading}
+          showButton={true}
+  buttonLabel="Add Category"
+    onButtonClick={() => handleAdd()}
       />
       <CategoryFormModal
         open={modalOpen}

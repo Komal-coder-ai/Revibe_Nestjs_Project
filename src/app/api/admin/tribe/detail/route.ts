@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Tribe from '@/models/Tribe';
+import TribeCategory from '@/models/TribeCategory';
 import mongoose from 'mongoose';
 /**
  * @swagger
@@ -96,21 +97,20 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const formattedTribe = {
+      // Fetch category name
+      let categoryName = '';
+      if (tribe.category) {
+        const categoryDoc = await TribeCategory.findById(tribe.category).select('name');
+        categoryName = categoryDoc ? categoryDoc.name : '';
+      }
+      // Return all fields from the tribe document, plus id as string and categoryName
+      const allFields = {
+        ...tribe,
         id: tribe._id.toString(),
-        name: tribe.name,
-        tribeName: tribe.tribeName,
-        category: tribe.category,
-        createdDate: tribe.createdAt ? new Date(tribe.createdAt).toLocaleDateString('en-US') : '',
-        createdBy: tribe.createdBy,
-        totalMembers: tribe.totalMembers,
-        totalPosts: tribe.totalPosts,
-        icon: tribe.icon,
-        coverImage: tribe.coverImage,
-        isActive: tribe.isActive,
+        categoryName,
       };
 
-      return NextResponse.json({ success: true, data: formattedTribe });
+      return NextResponse.json({ success: true, data: allFields });
     } catch (error) {
       console.error(`Error fetching tribe details for ID ${tribeId}:`, error);
       return NextResponse.json(

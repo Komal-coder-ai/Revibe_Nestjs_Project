@@ -174,7 +174,7 @@ export default function AdminFeedPage() {
             cell: (row) => (
                 <Link
                     href="#"
-                    style={{ color: '#2563eb', textDecoration: 'none' }} // blue
+                    style={{  textDecoration: 'none' }} // blue
                 >
                     {row.postId}
                 </Link>
