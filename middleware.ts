@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
   const allowedOrigins = [
     'http://localhost:3000',
     'https://revibe-nestjs-project.vercel.app',
-    'https://84f4ea7c0305.ngrok-free.app', '*'
+    'https://84f4ea7c0305.ngrok-free.app',
   ];
 
   // Get the request origin

@@ -113,6 +113,7 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
     const { searchParams } = new URL(req.url);
+    console.log('Received request with params:', searchParams.toString());
     let userId = searchParams.get('userId') ?? undefined;
     if (userId === '' || userId === 'null' || userId == null) userId = "";
     // if (!userId) {
