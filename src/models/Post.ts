@@ -1,4 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
+import { string } from 'zod';
 
 const PostSchema = new Schema(
   {
@@ -18,6 +19,7 @@ const PostSchema = new Schema(
     // For quiz: index of correct answer (optional, for easier access)
     correctOption: { type: Number },
     postType: { type: Number },
+    shortcode: { type: String, default: '' },
     // ...existing code...  
     media: [
       {

@@ -59,10 +59,11 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const postId = searchParams.get('postId');
-        let userId = searchParams.get('userId');
-        if (!userId) {
-            return NextResponse.json({ data: { status: false, message: 'userId is required' } }, { status: 400 });
-        }
+        let userId = searchParams.get('userId') ?? undefined;
+        if (userId === '' || userId === 'null' || userId == null) userId = "";
+        // if (!userId) {
+        //     return NextResponse.json({ data: { status: false, message: 'userId is required' } }, { status: 400 });
+        // }
         if (!postId || postId.length !== 24) {
             return NextResponse.json({ data: { status: false, message: 'Invalid postId' } }, { status: 400 });
         }
@@ -79,11 +80,13 @@ export async function GET(request: NextRequest) {
         }
 
         // Track post view 
-        try {
-            await trackPostView(userId, postId);
-        } catch (e) {
-            // Log but do not block response if view tracking fails
-            console.error('Failed to record post view:', e);
+        if (userId) {
+            try {
+                await trackPostView(userId, postId);
+            } catch (e) {
+                // Log but do not block response if view tracking fails
+                console.error('Failed to record post view:', e);
+            }
         }
 
         const [responsePost] = await processPostsWithStats(posts, userId);
