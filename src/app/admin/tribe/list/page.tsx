@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { Switch } from '@mui/material';
 
 interface Tribe {
+  categoryName: string;
   tribeId: string;
   tribeName: string;
   category: string;
@@ -20,6 +21,7 @@ interface Tribe {
   coverImage: string;
   isActive: boolean;
   statusLoading?: boolean;
+  rules: string[];
 }
 
 export default function TribeListPage() {
@@ -141,12 +143,12 @@ export default function TribeListPage() {
       name: 'Rules',
       width: '250px',
       selector: (row: Tribe) =>
-        row.rules?.join(', ') || '-',   // ✅ comma separated
+        row?.rules?.join(', ') || '-',   // ✅ comma separated
       sortable: false,
       cell: (row: Tribe) => (
         <span className="text-gray-700">
-          {row.rules && row.rules.length > 0
-            ? row.rules.join(', ')
+          {row?.rules && row?.rules.length > 0
+            ? row?.rules.join(', ')
             : '-'}
         </span>
       ),
@@ -225,8 +227,7 @@ export default function TribeListPage() {
       cell: (row: Tribe) => (
         <Switch
           checked={row.isActive}
-          onChange={(checked) => handleStatusChange(row.tribeId, checked)}
-          loading={row.statusLoading}
+          onChange={(e) => handleStatusChange(row.tribeId, e.target.checked)}
         />
       ),
     },

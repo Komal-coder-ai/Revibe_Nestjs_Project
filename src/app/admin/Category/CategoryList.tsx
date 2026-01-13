@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import DataTable from '../users/DataTable';
+import DataTable from '../components/DataTable';
 import { TableColumn } from 'react-data-table-component';
 import { Button } from '@mui/material';
 import Link from 'next/link';

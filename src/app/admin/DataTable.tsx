@@ -572,7 +572,6 @@ const DataTableComponent: React.FC<DataTableProps> = ({
                         columns={finalColumns}
                         data={filteredData}
                         pagination={pagination}
-  highlightOnHover={false}  
                         paginationServer={paginationServerMode}
                         paginationDefaultPage={paginationDefaultPage}
                         paginationTotalRows={paginationTotalRows}

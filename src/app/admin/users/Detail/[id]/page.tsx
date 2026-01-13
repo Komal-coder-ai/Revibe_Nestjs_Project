@@ -18,7 +18,6 @@ import {
   CircularProgress,
   Container,
   Stack,
-  Grid,
   Skeleton,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -47,7 +46,6 @@ import {
 } from '@mui/icons-material';
 import AdminFeedPage from '@/app/admin/Feed/page';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
-
 
 interface UserDetail {
   id: string;
@@ -207,23 +205,30 @@ export default function UserDetailPage() {
           <Stack spacing={3}>
             {/* Header Skeleton */}
             <Card sx={{ p: 3 }}>
-              <Grid container spacing={3} alignItems="center">
-                <Grid item>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  gap: 3,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Skeleton variant="circular" width={80} height={80} />
-                </Grid>
-                <Grid item xs>
+                </Box>
+                <Box sx={{ flex: 1 }}>
                   <Skeleton width="40%" height={32} />
-                  <Skeleton width="30%" height={20} />
-                  <Stack direction="row" spacing={1} mt={1}>
+                  <Skeleton width="30%" height={20} sx={{ mt: 1 }} />
+                  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                     <Skeleton width={70} height={24} />
                     <Skeleton width={70} height={24} />
-                  </Stack>
-                </Grid>
-                <Grid item>
+                  </Box>
+                </Box>
+                <Box>
                   <Skeleton width={120} height={20} />
                   <Skeleton width={80} height={20} />
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </Card>
 
             {/* Tabs Skeleton */}
@@ -234,17 +239,6 @@ export default function UserDetailPage() {
               </Box>
 
               <Box p={3}>
-                {/* Stats Skeleton */}
-                {/* <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <Skeleton height={120} />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Skeleton height={120} />
-          </Grid>
-        </Grid> */}
-
-                {/* Info Cards Skeleton */}
                 <Stack spacing={3} mt={4}>
                   <Skeleton height={200} />
                   <Skeleton height={180} />
@@ -255,39 +249,41 @@ export default function UserDetailPage() {
         ) : userDetails ? (
           <>
             <Stack spacing={3}>
-
+              {/* Header Card */}
               <Card sx={{ p: 3 }}>
-                <Grid
-                  container
-                  spacing={3}
-                // alignItems="center"
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    gap: 3,
+                  }}
                 >
+                  {/* LEFT: Back + Avatar */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <KeyboardArrowLeftIcon 
+                      sx={{ cursor: 'pointer' }} 
+                      onClick={() => router.back()} 
+                    />
+                    <Avatar
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        fontSize: '2rem',
+                        fontWeight: 'bold',
+                      }}
+                      src={userDetails.profileImage}
+                    >
+                      {userDetails.name && userDetails.name !== 'N/A'
+                        ? userDetails.name.charAt(0).toUpperCase()
+                        : '?'}
+                    </Avatar>
+                  </Box>
 
-                  {/* LEFT : Back + Avatar */}
-                  <Grid item xs={12} sm={'auto'}>
-                    <Stack direction="row" spacing={2} >
-                      <KeyboardArrowLeftIcon sx={{ cursor: 'pointer' }} onClick={() => router.back()} />
-
-                      <Avatar
-                        sx={{
-                          width: 80,
-                          height: 80,
-                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                          fontSize: '2rem',
-                          fontWeight: 'bold',
-                        }}
-                        src={userDetails.profileImage}
-                      >
-                        {userDetails.name && userDetails.name !== 'N/A'
-                          ? userDetails.name.charAt(0).toUpperCase()
-                          : '?'}
-                      </Avatar>
-                    </Stack>
-                  </Grid>
-
-                  {/* CENTER : User Info */}
-                  <Grid item xs>
-                    <Stack spacing={0.5} justifyContent="center">
+                  {/* CENTER: User Info */}
+                  <Box sx={{ flex: 1 }}>
+                    <Stack spacing={0.5}>
                       <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
                         {userDetails.name && userDetails.name !== 'N/A'
                           ? userDetails.name
@@ -300,7 +296,7 @@ export default function UserDetailPage() {
                           : '-'}
                       </Typography>
 
-                      <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                      <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                         <Chip
                           label={userDetails.status === 1 ? 'Active' : 'Inactive'}
                           color={userDetails.status === 1 ? 'success' : 'error'}
@@ -314,16 +310,13 @@ export default function UserDetailPage() {
                         {userDetails.isVerified && (
                           <Chip label="✓ Verified" color="warning" size="small" />
                         )}
-                      </Stack>
+                      </Box>
                     </Stack>
-                  </Grid>
+                  </Box>
 
-                  {/* RIGHT : Member Since (push to end) */}
-                  <Grid
-                    item
-                    sx={{ ml: 'auto' }}   // ✅ pushes to extreme right
-                  >
-                    <Stack alignItems="flex-end" justifyContent="center">
+                  {/* RIGHT: Member Since */}
+                  <Box>
+                    <Stack alignItems={{ xs: 'flex-start', sm: 'flex-end' }}>
                       <Typography variant="caption" color="text.secondary">
                         Member Since
                       </Typography>
@@ -331,11 +324,9 @@ export default function UserDetailPage() {
                         {userDetails.joinedDate || '-'}
                       </Typography>
                     </Stack>
-                  </Grid>
-
-                </Grid>
+                  </Box>
+                </Box>
               </Card>
-
 
               {/* Tabs Card */}
               <Card>
@@ -369,13 +360,26 @@ export default function UserDetailPage() {
                     },
                   }}
                 >
-                  <Tab icon={<Person sx={{ mr: 1 }} />} iconPosition="start" label="Profile Details" id="tab-0" aria-controls="tabpanel-0" />
-                  <Tab icon={<TrendingUp sx={{ mr: 1 }} />} iconPosition="start" label="Activity Feed" id="tab-1" aria-controls="tabpanel-1" />
+                  <Tab 
+                    icon={<Person sx={{ mr: 1 }} />} 
+                    iconPosition="start" 
+                    label="Profile Details" 
+                    id="tab-0" 
+                    aria-controls="tabpanel-0" 
+                  />
+                  <Tab 
+                    icon={<TrendingUp sx={{ mr: 1 }} />} 
+                    iconPosition="start" 
+                    label="Activity Feed" 
+                    id="tab-1" 
+                    aria-controls="tabpanel-1" 
+                  />
                 </Tabs>
 
                 {/* Profile Details Tab */}
                 <TabPanel value={tabValue} index={0}>
                   <Stack spacing={4}>
+                    {/* Social Information */}
                     <Box sx={{ width: '100%' }}>
                       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 3 }}>
                         <PeopleAlt sx={{ color: 'black', fontSize: '1.5rem' }} />
@@ -383,144 +387,142 @@ export default function UserDetailPage() {
                           Social Information
                         </Typography>
                       </Stack>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-                        <div>
-                          <Card
-                            sx={{
-                              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                              p: 1,
-                              textAlign: 'center',
-                              borderRadius: 2,
-                              color: 'white',
-                              boxShadow: '0 8px 16px rgba(102, 126, 234, 0.3)',
-                              transition: 'transform 0.3s ease',
-                              '&:hover': { transform: 'translateY(-4px)' },
-                              width: '100%',
-                              height: '100%',
-                            }}
-                          >
-                            <Typography variant="caption" sx={{ opacity: 0.9, fontWeight: 600, fontSize: '1rem' }}>
-                              Followers
-                            </Typography>
-                            <Typography variant="h2" sx={{ fontWeight: 800, mt: 2 }}>
-                              {userDetails.followersCount}
-                            </Typography>
-                          </Card>
-                        </div>
-                        <div>
-                          <Card
-                            sx={{
-                              background: 'linear-gradient(135deg, #f59e0b 0%, #ec4899 100%)',
-                              p: 1,
-                              textAlign: 'center',
-                              borderRadius: 2,
-                              color: 'white',
-                              boxShadow: '0 8px 16px rgba(245, 158, 11, 0.3)',
-                              transition: 'transform 0.3s ease',
-                              '&:hover': { transform: 'translateY(-4px)' },
-                              width: '100%',
-                              height: '100%',
-                            }}
-                          >
-                            <Typography variant="caption" sx={{ opacity: 0.9, fontWeight: 600, fontSize: '1rem' }}>
-                              Following
-                            </Typography>
-                            <Typography variant="h2" sx={{ fontWeight: 800, mt: 2 }}>
-                              {userDetails.followingCount}
-                            </Typography>
-                          </Card>
-                        </div>
-
-                      </div>
-
-                    </Box>
-
-
-                    <Grid component="div">
-                      <Card
+                      <Box
                         sx={{
-                          p: 3,
-                          bgcolor: '#f9fafb',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: 2,
-                          width: '100%', // Ensure card takes full width
-                          '&:hover': { boxShadow: '0 4px 12px rgba(102, 126, 234, 0.1)' },
-                          transition: 'all 0.3s ease',
+                          display: 'flex',
+                          flexDirection: { xs: 'column', sm: 'row' },
+                          gap: 2,
+                          '& > *': {
+                            flex: { xs: '1 1 100%', sm: '1' },
+                          },
                         }}
                       >
-                        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 3 }}>
-                          <EditNote sx={{ color: '#525252', fontSize: '1.5rem' }} />
-                          <Typography variant="h6" fontWeight="bold">
-                            Core Profile Information
-                          </Typography>
-                        </Stack>
-
-                        {/* This Box forces the children into 2 equal columns */}
-                        <Box
+                        <Card
                           sx={{
-                            // borderLeft: '3px solid #667eea',
-                            pl: 2,
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 1fr', // 1fr 1fr forces two equal columns
-                            gap: 3 // Adds space between rows and columns
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            p: 3,
+                            textAlign: 'center',
+                            borderRadius: 2,
+                            color: 'white',
+                            boxShadow: '0 8px 16px rgba(102, 126, 234, 0.3)',
+                            transition: 'transform 0.3s ease',
+                            '&:hover': { transform: 'translateY(-4px)' },
+                            flex: 1,
+                            minHeight: 120,
                           }}
                         >
-                          {[
-                            { label: 'Username', value: userDetails.username, Icon: Person },
-                            { label: 'Full Name', value: userDetails.name, Icon: EditNote },
-                            { label: 'Email Address', value: userDetails.email, Icon: Email },
-                            {
-                              label: 'Phone Number',
-                              value: `${userDetails.countryCode} ${userDetails.mobile}`,
-                              Icon: Phone,
-                            },
-                            { label: 'Bio', value: userDetails.bio || 'Not provided', Icon: Notes },
-                            ...(userDetails.aadhar
-                              ? [{ label: 'Aadhar', value: userDetails.aadhar, Icon: Badge }]
-                              : []),
-                          ].map((field, idx) => (
-                            <Box
-                              key={idx}
+                          <Typography variant="caption" sx={{ opacity: 0.9, fontWeight: 600, fontSize: '1rem' }}>
+                            Followers
+                          </Typography>
+                          <Typography variant="h2" sx={{ fontWeight: 800, mt: 2 }}>
+                            {userDetails.followersCount}
+                          </Typography>
+                        </Card>
+                        <Card
+                          sx={{
+                            background: 'linear-gradient(135deg, #f59e0b 0%, #ec4899 100%)',
+                            p: 3,
+                            textAlign: 'center',
+                            borderRadius: 2,
+                            color: 'white',
+                            boxShadow: '0 8px 16px rgba(245, 158, 11, 0.3)',
+                            transition: 'transform 0.3s ease',
+                            '&:hover': { transform: 'translateY(-4px)' },
+                            flex: 1,
+                            minHeight: 120,
+                          }}
+                        >
+                          <Typography variant="caption" sx={{ opacity: 0.9, fontWeight: 600, fontSize: '1rem' }}>
+                            Following
+                          </Typography>
+                          <Typography variant="h2" sx={{ fontWeight: 800, mt: 2 }}>
+                            {userDetails.followingCount}
+                          </Typography>
+                        </Card>
+                      </Box>
+                    </Box>
+
+                    {/* Core Profile Information */}
+                    <Card
+                      sx={{
+                        p: 3,
+                        bgcolor: '#f9fafb',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: 2,
+                        width: '100%',
+                        '&:hover': { boxShadow: '0 4px 12px rgba(102, 126, 234, 0.1)' },
+                        transition: 'all 0.3s ease',
+                      }}
+                    >
+                      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 3 }}>
+                        <EditNote sx={{ color: '#525252', fontSize: '1.5rem' }} />
+                        <Typography variant="h6" fontWeight="bold">
+                          Core Profile Information
+                        </Typography>
+                      </Stack>
+
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: 3,
+                          '& > *': {
+                            flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 12px)' },
+                            minWidth: 0,
+                          },
+                        }}
+                      >
+                        {[
+                          { label: 'Username', value: userDetails.username, Icon: Person },
+                          { label: 'Full Name', value: userDetails.name, Icon: EditNote },
+                          { label: 'Email Address', value: userDetails.email, Icon: Email },
+                          {
+                            label: 'Phone Number',
+                            value: `${userDetails.countryCode} ${userDetails.mobile}`,
+                            Icon: Phone,
+                          },
+                          { label: 'Bio', value: userDetails.bio || 'Not provided', Icon: Notes },
+                          ...(userDetails.aadhar
+                            ? [{ label: 'Aadhar', value: userDetails.aadhar, Icon: Badge }]
+                            : []),
+                        ].map((field, idx) => (
+                          <Box
+                            key={idx}
+                            sx={{
+                              pb: 1,
+                              minWidth: 0,
+                            }}
+                          >
+                            <Stack direction="row" alignItems="center" spacing={0.8}>
+                              <field.Icon sx={{ fontSize: '1rem', color: '#525252' }} />
+                              <Typography
+                                variant="caption"
+                                sx={{ fontWeight: 700, color: '#525252' }}
+                              >
+                                {field.label}
+                              </Typography>
+                            </Stack>
+
+                            <Typography
+                              variant="body2"
                               sx={{
-                                pb: 1,
-                                // borderBottom: '1px solid #e5e7eb',
-                                minWidth: 0 // Prevents long text from breaking the grid
+                                mt: 0.5,
+                                color: '#2d3748',
+                                fontWeight: 500,
+                                ml: 3,
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
                               }}
                             >
-                              <Stack direction="row" alignItems="center" spacing={0.8}>
-                                <field.Icon sx={{ fontSize: '1rem', color: '#525252' }} />
-                                <Typography
-                                  variant="caption"
-                                  sx={{ fontWeight: 700, color: '#525252' }}
-                                >
-                                  {field.label}
+                              {field.value && field.value !== 'N/A' ? field.value : '-'}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Card>
 
-                                </Typography>
-                              </Stack>
-
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  mt: 0.5,
-                                  color: '#2d3748',
-                                  fontWeight: 500,
-                                  ml: 3,
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis' // Adds "..." if text is too long
-                                }}
-                              >
-                                {/* {field.value} */}
-                                {field.value && field.value !== 'N/A' ? field.value : '-'}
-                              </Typography>
-                            </Box>
-                          ))}
-                        </Box>
-                      </Card>
-                    </Grid>
-
-
-
+                    {/* Account Information */}
                     <Card
                       sx={{
                         p: 3,
@@ -540,12 +542,13 @@ export default function UserDetailPage() {
 
                       <Box
                         sx={{
-                          // borderLeft: '3px solid #764ba2',
-                          pl: 2,
-                          display: 'grid',
-                          // Force exactly 2 columns
-                          gridTemplateColumns: 'repeat(2, 1fr)',
+                          display: 'flex',
+                          flexWrap: 'wrap',
                           gap: 2,
+                          '& > *': {
+                            flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)' },
+                            minWidth: 0,
+                          },
                         }}
                       >
                         {[
@@ -566,20 +569,18 @@ export default function UserDetailPage() {
                           { label: 'User Type', value: userDetails.userType, Icon: People },
                           ...(userDetails.referralCode
                             ? [
-                              {
-                                label: 'Referral Code',
-                                value: userDetails.referralCode,
-                                Icon: CardGiftcard,
-                              },
-                            ]
+                                {
+                                  label: 'Referral Code',
+                                  value: userDetails.referralCode,
+                                  Icon: CardGiftcard,
+                                },
+                              ]
                             : []),
                         ].map((field: any, idx) => (
                           <Box
                             key={idx}
                             sx={{
                               pb: 1.5,
-                              // Horizontal line for all except potentially the last row
-                              // borderBottom: '1px solid #e5e7eb',
                               minWidth: 0,
                             }}
                           >
@@ -592,7 +593,6 @@ export default function UserDetailPage() {
                                   color: '#525252',
                                   fontSize: '0.85rem',
                                   m: 0,
-                                  // textTransform: 'uppercase',
                                 }}
                               >
                                 {field.label}
@@ -605,21 +605,15 @@ export default function UserDetailPage() {
                                 color: field.color || '#2d3748',
                                 fontWeight: field.color ? 700 : 500,
                                 ml: 3.5,
-                                // Prevent layout break if text is very long
                                 wordBreak: 'break-word',
                               }}
                             >
-                              {/* {field.value} */}
                               {field.value && field.value !== 'N/A' ? field.value : '-'}
                             </Typography>
                           </Box>
                         ))}
                       </Box>
                     </Card>
-
-
-
-
                   </Stack>
                 </TabPanel>
 

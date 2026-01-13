@@ -50,10 +50,13 @@
  *       500:
  *         description: Server error
  */
+
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import TribeCategory from '@/models/TribeCategory';
 
+// PATCH /api/admin/tribe/category/activeinactive
+export async function PATCH(request: NextRequest) {
     try {
         await connectDB();
         const { categoryId, isActive } = await request.json();
