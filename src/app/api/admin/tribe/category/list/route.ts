@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     const skip = (page - 1) * limit;
     const sort = payload.sort || { createdAt: -1 };
 
-    const categoriesRaw = await TribeCategory.find({ isDeleted: false })
+    const categoriesRaw = await TribeCategory.find()
       .sort(sort)
       .skip(skip)
       .limit(limit)
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       active: cat.isDeleted ? 0 : 1,
     }));
 
-    const total = await TribeCategory.countDocuments({ isDeleted: false });
+    const total = await TribeCategory.countDocuments();
     const totalPages = Math.ceil(total / limit);
 
     return NextResponse.json({
