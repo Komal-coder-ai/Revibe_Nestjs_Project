@@ -150,9 +150,11 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
 
     const userId = searchParams.get('userId') || undefined;
-    const search = searchParams.get('search') || '';
+    let search = searchParams.get('search') || '';
+    if (search === '""') search = '';
     const type = searchParams.get('type') || '1'; // 1=all, 2=joined, 3=not joined
-    const cursor = searchParams.get('cursor');
+    let cursor = searchParams.get('cursor');
+    if (cursor === '' || cursor === '""') cursor = null;
     const limit = parseInt(searchParams.get('limit') || '20', 10);
 
     /* ----------------------------------------
