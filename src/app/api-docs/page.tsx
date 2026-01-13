@@ -68,7 +68,7 @@ export default function ApiDocs() {
           <p className="mt-2 text-blue-100">Interactive API testing and documentation</p>
           <div className="mt-3 flex gap-4 text-sm">
             <a href="/" className="text-blue-100 hover:text-white transition-colors">← Back to Home</a>
-            <a href="/admin/login" className="text-blue-100 hover:text-white transition-colors">Admin Login</a>
+            <a href="/login" className="text-blue-100 hover:text-white transition-colors">Admin Login</a>
             <a href="/customer/login" className="text-blue-100 hover:text-white transition-colors">Customer Login</a>
           </div>
         </div>
