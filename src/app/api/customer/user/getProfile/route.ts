@@ -108,7 +108,7 @@ export async function GET(req: Request) {
     const [followers, followings, postCount] = await Promise.all([
       Follow.countDocuments({ following: targetUserId, status: 'accepted', isDeleted: false }),
       Follow.countDocuments({ follower: targetUserId, status: 'accepted', isDeleted: false }),
-      Post.countDocuments({ userId: targetUserId, isDeleted: false })
+      Post.countDocuments({ user: targetUserId, isDeleted: false })
     ]);
 
     let userStoreId = await Store.findOne({ ownerId: targetUserId, isDeleted: false }).select('_id');
