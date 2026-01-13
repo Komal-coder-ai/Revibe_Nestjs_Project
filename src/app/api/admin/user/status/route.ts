@@ -77,13 +77,19 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
+    let isActive = true;
+    if (status === 0) {
+      isActive = false;
+    } else {
+      isActive = true;
+    }
 
     // Update user status
     console.log('Attempting to update user with ID:', userId, 'to status:', Number(status));
-    
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { status: Number(status) },
+      { isActive: isActive },
       { new: true }
     ).lean() as any;
 
@@ -100,8 +106,8 @@ export async function PUT(request: NextRequest) {
     console.log('=== END STATUS UPDATE ===');
 
     // Generate message based on status
-    const statusMessage = updatedUser.status === 1 
-      ? 'User status activated successfully' 
+    const statusMessage = updatedUser.status === 1
+      ? 'User status activated successfully'
       : 'User status deactivated successfully';
 
     return NextResponse.json(

@@ -86,10 +86,15 @@ export async function GET(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const userId = searchParams.get('userId'); // logged-in user
         const targetUserId = searchParams.get('targetUserId'); // whose followers to fetch
-        const cursor = searchParams.get('cursor');
-        const cursorId = searchParams.get('cursorId');
+        let cursor = searchParams.get('cursor');
+        let cursorId = searchParams.get('cursorId');
         const limit = parseInt(searchParams.get('limit') || '20', 10);
-        const search = searchParams.get('search')?.trim() || '';
+        let search = searchParams.get('search')?.trim() || '';
+
+        if (cursor === '' || cursor === 'null' || cursor == null) cursor = null;
+        if (cursorId === '' || cursorId === 'null' || cursorId == null) cursorId = null;
+        if (search === '' || search === "" || search === 'null' || search == null) search = "";
+
 
         if (!userId || !targetUserId) return NextResponse.json({
             data: {
@@ -104,7 +109,15 @@ export async function GET(req: NextRequest) {
             isDeleted: false
         };
         const searchStage = search
-            ? [{ $match: { 'followerUser.username': { $regex: search, $options: 'i' } } }]
+            ? [{
+                $match: {
+                    $or: [
+                        { 'followerUser.username': { $regex: search, $options: 'i' } },
+                        { 'followerUser.name': { $regex: search, $options: 'i' } },
+                    ]
+                }
+            }
+            ]
             : [];
 
         // Cursor-based pagination logic

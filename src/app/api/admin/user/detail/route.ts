@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
-
+import Follow from '@/models/Follow';
+import Post from '@/models/Post';
 /**
  * @swagger
  * /api/admin/user/detail:
@@ -90,6 +91,11 @@ export async function GET(request: NextRequest) {
         { status: 404 }
       );
     }
+    const [followers, followings, postCount] = await Promise.all([
+      Follow.countDocuments({ following: userId, status: 'accepted', isDeleted: false }),
+      Follow.countDocuments({ follower: userId, status: 'accepted', isDeleted: false }),
+      Post.countDocuments({ user: userId, isDeleted: false })
+    ]);
 
     // Format user data
     const formattedUser = {
@@ -105,6 +111,7 @@ export async function GET(request: NextRequest) {
       coverImage: user.coverImage?.[0]?.imageUrl || '',
       profileType: user.profileType || 'public',
       isVerified: user.isVerified || false,
+      isActive: user.isActive,
       status: user.status !== undefined ? user.status : (user.isVerified ? 1 : 0),
       userType: user.userType || 'original',
       referralCode: user.referralCode || '',
@@ -119,8 +126,9 @@ export async function GET(request: NextRequest) {
         day: '2-digit',
       }),
       updatedAt: user.updatedAt,
-      followersCount: 0, // TODO: Implement followers count from follows collection
-      followingCount: 0, // TODO: Implement following count from follows collection
+      followersCount: followers,
+      followingCount: followings,
+      postCount: postCount,
     };
 
     return NextResponse.json(
