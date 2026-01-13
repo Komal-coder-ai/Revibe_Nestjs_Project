@@ -116,7 +116,7 @@ export async function GET(req: Request) {
     let profile;
     const raw = targetUser.toObject ? targetUser.toObject() : targetUser;
     if (userId === targetUserId) {
-      // Return full profile for self
+      // Return full profile for self, including notificationSettings
       profile = {
         userId: raw._id?.toString?.() ?? raw._id,
         countryCode: raw.countryCode || '',
@@ -138,7 +138,7 @@ export async function GET(req: Request) {
         userStoreId: userStoreId?._id?.toString() || null,
       };
     } else {
-      // Return public profile for others
+      // Return public profile for others, do NOT include notificationSettings
       let followStatusCode = 0;
       if (userId) {
         followStatusCode = await getSingleFollowStatus(userId, targetUserId);

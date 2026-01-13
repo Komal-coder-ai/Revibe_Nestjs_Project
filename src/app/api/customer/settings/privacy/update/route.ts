@@ -1,6 +1,6 @@
 /**
  * @swagger
- * /api/customer/settings/privacy:
+ * /api/customer/settings/privacy/update:
  *   patch:
  *     summary: Update privacy and activity status settings
  *     description: Update user's profile type (public/private) or activity status visibility (on/off) using type and action fields.

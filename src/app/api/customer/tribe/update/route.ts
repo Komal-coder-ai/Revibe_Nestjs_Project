@@ -173,7 +173,7 @@ export async function POST(req: NextRequest) {
         const tribeObj = tribe.toObject ? tribe.toObject() : { ...tribe };
         tribeObj.tribeId = tribeObj._id;
         delete tribeObj._id;
-        return NextResponse.json({ data: { status: true, tribe: tribeObj } });
+        return NextResponse.json({ data: { status: true, message: "Tribe updated successfully", tribe: tribeObj } });
     } catch (error) {
         console.log('Error updating tribe:', error);
         return NextResponse.json({ data: { status: false, message: error instanceof Error ? error.message : 'Error updating tribe' } }, { status: 500 });

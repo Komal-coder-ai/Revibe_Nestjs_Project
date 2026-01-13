@@ -45,6 +45,7 @@ import { NextRequest } from 'next/server';
 // import Otp from '../../../../models/Otp';
 import { startOtpSchema } from '../validator/schemas';
 import { generateOTP, sendOtpMock } from '@/../../src/lib/otp';
+import NotificationSettings from '@/models/NotificationSettings';
 import { checkAndHandleLockout, handleFailedLogin } from '@/lib/authUtils';
 
 export async function POST(request: NextRequest) {
@@ -88,6 +89,7 @@ export async function POST(request: NextRequest) {
       user = await User.create(userData);
     }
 
+
     // Check lockout status
     // const lockout = await checkAndHandleLockout(user);
     // if (lockout.locked) {
@@ -110,10 +112,17 @@ export async function POST(request: NextRequest) {
     user.otp = code;
     user.otpExpiresAt = expiresAt;
     await user.save();
-    console.log('DEBUG: OTP set on user', { userId: user._id, otp: user.otp, otpExpiresAt: user.otpExpiresAt });
+    // console.log('DEBUG: OTP set on user', { userId: user._id, otp: user.otp, otpExpiresAt: user.otpExpiresAt });
     // await sendOtpMock(countryCode, mobile, code);
     // await handleFailedLogin(user);
 
+
+// ******************** move this later when user create profile *********************
+    await NotificationSettings.findOneAndUpdate(
+      { userId: user._id },
+      {},
+      { upsert: true, new: true }
+    ); // Create default notification settings
     return NextResponse.json({
       data: {
         status: true,

@@ -61,13 +61,14 @@ import * as bcrypt from 'bcryptjs';
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
+
 export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
     const { email, password } = body;
 
-    console.log('Admin login attempt for email:', email); 
+    console.log('Admin login attempt for email:', email);
     // Validate input
     if (!email || !password) {
       return NextResponse.json(
@@ -77,36 +78,36 @@ export async function POST(request: NextRequest) {
     }
 
     // Hardcoded authentication (for testing/development)
-    const HARDCODED_ADMIN = {
-      email: 'komalp@mailinator.com',
-      password: 'Komal@123',
-      name: 'Komal P',
-      countryCode: '+91',
-      mobile: '',
-      role: 'admin',
-      isActive: true,
-      id: 'hardcoded-admin-001'
-    };
+    // const HARDCODED_ADMIN = {
+    //   email: 'komalp@mailinator.com',
+    //   password: 'Komal@123',
+    //   name: 'Komal P',
+    //   countryCode: '+91',
+    //   mobile: '',
+    //   role: 'admin',
+    //   isActive: true,
+    //   id: 'hardcoded-admin-001'
+    // };
 
     // Check hardcoded credentials first
-    if (email.toLowerCase() === HARDCODED_ADMIN.email && password === HARDCODED_ADMIN.password) {
-      return NextResponse.json(
-        {
-          success: true,
-          message: 'Login successful',
-          data: {
-            id: HARDCODED_ADMIN.id,
-            name: HARDCODED_ADMIN.name,
-            email: HARDCODED_ADMIN.email,
-            countryCode: HARDCODED_ADMIN.countryCode,
-            mobile: HARDCODED_ADMIN.mobile,
-            role: HARDCODED_ADMIN.role,
-            isActive: HARDCODED_ADMIN.isActive
-          }
-        },
-        { status: 200 }
-      );
-    }
+    // if (email.toLowerCase() === HARDCODED_ADMIN.email && password === HARDCODED_ADMIN.password) {
+    //   return NextResponse.json(
+    //     {
+    //       success: true,
+    //       message: 'Login successful',
+    //       data: {
+    //         id: HARDCODED_ADMIN.id,
+    //         name: HARDCODED_ADMIN.name,
+    //         email: HARDCODED_ADMIN.email,
+    //         countryCode: HARDCODED_ADMIN.countryCode,
+    //         mobile: HARDCODED_ADMIN.mobile,
+    //         role: HARDCODED_ADMIN.role,
+    //         isActive: HARDCODED_ADMIN.isActive
+    //       }
+    //     },
+    //     { status: 200 }
+    //   );
+    // }
 
     // If hardcoded credentials don't match, try database authentication with upsert
     try {
@@ -117,45 +118,51 @@ export async function POST(request: NextRequest) {
       let admin = await Admin.findOne({ email: email.toLowerCase() });
 
       if (!admin) {
-        // Admin doesn't exist, create new admin with provided credentials
-        console.log('Admin not found, creating new admin...');
-        
-        // Hash the password
-        const hashedPassword = await bcrypt.hash(password, 10);
-        
-        // Create new admin with all fields
-        admin = await Admin.create({
-          name: email.split('@')[0], // Use email prefix as name
-          email: email.toLowerCase(),
-          password: hashedPassword,
-          countryCode: '',
-          mobile: '',
-          role: 'admin',
-          isActive: true,
-          otp: '',
-          refreshToken: ''
-        });
-
-        console.log('New admin created:', admin.email);
-
-        // Return success response for newly created admin
         return NextResponse.json(
-          {
-            success: true,
-            message: 'Admin account created and login successful',
-            data: {
-              id: admin._id,
-              name: admin.name,
-              email: admin.email,
-              countryCode: admin.countryCode,
-              mobile: admin.mobile,
-              role: admin.role,
-              isActive: admin.isActive
-            }
-          },
-          { status: 200 }
+          { success: false, message: 'Invalid email or password' },
+          { status: 401 }
         );
       }
+      // if (!admin) {
+      //   // Admin doesn't exist, create new admin with provided credentials
+      //   console.log('Admin not found, creating new admin...');
+
+      //   // Hash the password
+      //   const hashedPassword = await bcrypt.hash(password, 10);
+
+      //   // Create new admin with all fields
+      //   admin = await Admin.create({
+      //     name: email.split('@')[0], // Use email prefix as name
+      //     email: email.toLowerCase(),
+      //     password: hashedPassword,
+      //     countryCode: '',
+      //     mobile: '',
+      //     role: 'admin',
+      //     isActive: true,
+      //     otp: '',
+      //     refreshToken: ''
+      //   });
+
+      //   console.log('New admin created:', admin.email);
+
+      //   // Return success response for newly created admin
+      //   return NextResponse.json(
+      //     {
+      //       success: true,
+      //       message: 'Admin account created and login successful',
+      //       data: {
+      //         id: admin._id,
+      //         name: admin.name,
+      //         email: admin.email,
+      //         countryCode: admin.countryCode,
+      //         mobile: admin.mobile,
+      //         role: admin.role,
+      //         isActive: admin.isActive
+      //       }
+      //     },
+      //     { status: 200 }
+      //   );
+      // }
 
       // Admin exists, check if active
       if (!admin.isActive) {

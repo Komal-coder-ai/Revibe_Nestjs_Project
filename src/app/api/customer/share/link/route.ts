@@ -1,6 +1,6 @@
 /**
  * @openapi
- * /api/customer/share:
+ * /api/customer/share/link:
  *   post:
  *     summary: Share a post and generate a shareable URL
  *     description: |
@@ -8,7 +8,7 @@
  *       3 = Share post in app 
  *       2 = Copy post URL 
  *     tags:
- *       - Share
+ *       - Share-Copy-Link
  *     requestBody:
  *       required: true
  *       content:

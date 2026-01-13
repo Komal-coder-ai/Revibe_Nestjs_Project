@@ -1,6 +1,6 @@
 /**
  * @swagger
- * /api/customer/settings/notifications:
+ * /api/customer/settings/notifications/update:
  *   patch:
  *     summary: Update notification settings
  *     description: Update the user's notification preferences.
@@ -52,8 +52,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import User from '@/models/User';
-import { notificationSettingsSchema } from '../validator/schema';
+import NotificationSettings from '@/models/NotificationSettings';
+import { notificationSettingsSchema } from '../../validator/schema';
 
 export async function PATCH(req: NextRequest) {
     try {
@@ -67,13 +67,13 @@ export async function PATCH(req: NextRequest) {
         if (!parse.success) {
             return NextResponse.json({ data: { status: false, message: 'Invalid notification settings', errors: parse.error.issues } }, { status: 400 });
         }
-        const user = await User.findById(userId);
-        if (!user) {
-            return NextResponse.json({ data: { status: false, message: 'User not found' } }, { status: 404 });
-        }
-        user.notificationSettings = { ...user.notificationSettings, ...notificationSettings };
-        await user.save();
-        return NextResponse.json({ data: { status: true, message: 'Notification settings updated', notificationSettings: user.notificationSettings } });
+        // Upsert notification settings for the user
+        const updated = await NotificationSettings.findOneAndUpdate(
+            { userId },
+            { $set: notificationSettings },
+            { new: true }
+        );
+        return NextResponse.json({ data: { status: true, message: 'Notification settings updated', notificationSettings: updated } });
     } catch (error) {
         console.error('Error updating notification settings:', error);
         const message = (error instanceof Error) ? error.message : 'Internal server error';
