@@ -13,7 +13,7 @@ export async function getBlockedAndReportedFilters(userId?: string) {
     blockedUsers = await BlockedUser.find({ blockerId: userId, isDeleted: false }).select('blockedId');
     // console.log("blockedUsers", blockedUsers);
     blockedByUsers = await BlockedUser.find({ blockedId: userId, isDeleted: false }).select('blockerId');
-     reportedPosts = await Report.find({ userId }).select('postId');
+    reportedPosts = await Report.find({ userId }).select('postId');
   }
 
   const blockedUserIds = blockedUsers.map((b: any) => b.blockedId.toString());
@@ -28,4 +28,4 @@ export async function getBlockedAndReportedFilters(userId?: string) {
   const allBlockedUserIds = Array.from(new Set([...blockedUserIds, ...blockedByUserIds]));
 
   return { blockedUserIds: allBlockedUserIds, blockedPostIds };
-}
+} 

@@ -148,13 +148,13 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
     const { searchParams } = new URL(req.url);
-console.log('Received request with params:', searchParams);
+    console.log('Received request with params:', searchParams);
     const userId = searchParams.get('userId') || undefined;
     let search = searchParams.get('search') || '';
-    if (search === "''" || search === 'null' || search == null ) search = '';
+    if (search === "''" || search === 'null' || search == null) search = '';
     const type = searchParams.get('type') || '1'; // 1=all, 2=joined, 3=not joined
     let cursor = searchParams.get('cursor');
-    console.log('Parsed parameters:', { search, type ,cursor});
+    console.log('Parsed parameters:', { search, type, cursor });
     if (cursor === "''" || cursor === 'null' || cursor == null) cursor = null;
     const limit = parseInt(searchParams.get('limit') || '20', 10);
 
@@ -163,6 +163,7 @@ console.log('Received request with params:', searchParams);
     ---------------------------------------- */
     const tribeFilter: any = {
       isDeleted: { $ne: true },
+      isActive: true,
     };
 
     if (search) {
@@ -193,7 +194,7 @@ console.log('Received request with params:', searchParams);
             status: true,
             tribes: [],
             nextCursor: null,
-            allTribesCount: await Tribe.countDocuments({ isDeleted: { $ne: true } }),
+            allTribesCount: await Tribe.countDocuments({ isDeleted: { $ne: true }, isActive: true }),
             joinedTribesCount: 0,
             notJoinedTribesCount: 0,
           },

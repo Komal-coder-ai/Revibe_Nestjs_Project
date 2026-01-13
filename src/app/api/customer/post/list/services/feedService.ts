@@ -51,6 +51,7 @@ export async function getFeedPosts({ userId, cursor, cursorId, limit = 10, type,
     // Build base match filter
     const baseMatch: any = {
         isDeleted: false,
+        isActive: true,
         _id: blockedPostIds.length ? { $nin: blockedPostIds } : { $exists: true },
         $or: [
             { tribe: { $exists: false } },

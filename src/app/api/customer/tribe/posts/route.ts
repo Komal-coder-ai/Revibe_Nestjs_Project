@@ -104,7 +104,7 @@ export async function GET(req: NextRequest) {
         if (cursor === '' || cursor === 'null' || cursor == null) cursor = null;
         if (cursorId === '' || cursorId === 'null' || cursorId == null) cursorId = null;
         let sort = 'createdAt';
-        let matchStage: any = { isDeleted: false, tribe: new mongoose.Types.ObjectId(tribeId) };
+        let matchStage: any = { isDeleted: false, isActive: true, tribe: new mongoose.Types.ObjectId(tribeId) };
         if (cursor && cursorId) {
             matchStage.$or = [
                 { [sort]: { $lt: new Date(cursor) } },

@@ -53,7 +53,7 @@ import TribeCategory from '@/models/TribeCategory';
 export async function GET(req: NextRequest) {
     try {
         await connectDB();
-        const tribeCategories = await TribeCategory.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 }).select('name ');
+        const tribeCategories = await TribeCategory.find({ isDeleted: { $ne: true } , isActive: true }).sort({ createdAt: -1 }).select('name ');
         let ResponseProject = {
             tribeCategories
         };

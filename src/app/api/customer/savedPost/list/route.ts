@@ -136,7 +136,11 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ data: { status: false, message: 'userId is required' } }, { status: 400 });
         }
         // Cursor-based pagination for saved posts
-        const savedFilter: any = { userId: new mongoose.Types.ObjectId(userId), isDeleted: false };
+        const savedFilter: any = {
+            userId: new mongoose.Types.ObjectId(userId),
+            isDeleted: false,
+            isActive: true
+        };
         if (cursorId) {
             savedFilter._id = { $lt: cursorId };
         }

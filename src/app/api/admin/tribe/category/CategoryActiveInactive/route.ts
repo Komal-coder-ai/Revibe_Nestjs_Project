@@ -1,6 +1,6 @@
 /**
  * @swagger
- * /api/admin/tribe/category/activeinactive:
+ * /api/admin/tribe/category/CategoryActiveInactive:
  *   patch:
  *     summary: Update tribe category active/inactive status
  *     description: Set a tribe category as active or inactive by toggling isDeleted in the database.
@@ -65,7 +65,7 @@ export async function PATCH(request: NextRequest) {
         }
         const updated = await TribeCategory.findByIdAndUpdate(
             categoryId,
-            { isDeleted: !isActive },
+            { isActive: isActive },
             { new: true }
         );
         if (!updated) {

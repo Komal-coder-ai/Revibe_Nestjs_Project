@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     const categories = categoriesRaw.map((cat: any) => ({
       _id: cat._id,
       name: cat.name,
-      active: cat.isDeleted ? 0 : 1,
+      active: cat.isActive ? 1 : 0,
     }));
 
     const total = await TribeCategory.countDocuments({ isDeleted: false });

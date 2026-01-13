@@ -1,5 +1,4 @@
 import mongoose, { Schema } from 'mongoose';
-import { string } from 'zod';
 
 const PostSchema = new Schema(
   {
@@ -33,12 +32,14 @@ const PostSchema = new Schema(
         // _id: false // keep _id for media if you want to reference/delete individually
       }
     ],
+    isActive: { type: Boolean, default: true },
     text: { type: String, default: '' },
     caption: { type: String, default: '' },
     location: { type: String, default: '' },
     hashtags: [{ type: String, index: true }],
     taggedUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     isDeleted: { type: Boolean, default: false },
+
   },
   { timestamps: true }
 );

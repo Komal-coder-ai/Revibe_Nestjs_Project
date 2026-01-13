@@ -4,6 +4,7 @@ const TribeCategorySchema = new Schema(
     {
         name: { type: String, default: '' },
         isDeleted: { type: Boolean, default: false },
+        isActive: { type: Boolean, default: true },
     },
     { timestamps: true }
 );

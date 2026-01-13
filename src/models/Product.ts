@@ -7,6 +7,7 @@ const ProductSchema = new Schema(
     storeId: { type: Schema.Types.ObjectId, ref: "Store" },
     userId: { type: Schema.Types.ObjectId, ref: "User" },
     isDeleted: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: true },
     image: {
       type: [
         {

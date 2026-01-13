@@ -169,6 +169,7 @@ export async function GET(req: NextRequest) {
         // Build filter for posts (always use targetId)
         let filter: any = {
             isDeleted: false,
+            isActive: true,
             user: new mongoose.Types.ObjectId(targetId.toString()),
             $or: [
                 { tribe: { $exists: false } },

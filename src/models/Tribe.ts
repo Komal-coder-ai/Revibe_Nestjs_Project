@@ -36,6 +36,7 @@ const TribeSchema = new Schema({
   owner: { type: Types.ObjectId, ref: 'User', },
   isPublic: { type: Boolean, default: true },
   isOfficial: { type: Boolean, default: false },
+  isActive: { type: Boolean, default: true },
   isDeleted: { type: Boolean, default: false },
   deletedBy: { type: Types.ObjectId, ref: 'User' },
 }, {
