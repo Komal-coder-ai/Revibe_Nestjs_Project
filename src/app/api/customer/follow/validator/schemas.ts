@@ -8,7 +8,7 @@ export const followActionSchema = z.object({
 
 // Validation for accepting/rejecting follow requests
 export const followRequestActionSchema = z.object({
-  requestId: z.string().min(1),
+  targetUserId: z.string().min(1),
   action: z.enum(["1", "2"]), // 1 for accept, 2 for reject
   userId: z.string().min(1),
 });

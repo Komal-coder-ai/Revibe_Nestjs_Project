@@ -99,7 +99,6 @@ export async function POST(req: NextRequest) {
       let follow = await Follow.findOne({
         follower: userId,
         following: targetUserId,
-        isDeleted: false
       });
       if (follow) {
         follow.isDeleted = true;
@@ -113,7 +112,6 @@ export async function POST(req: NextRequest) {
       let follow = await Follow.findOne({
         follower: userId,
         following: targetUserId,
-        isDeleted: false
       });
       if (follow) {
         return NextResponse.json({ data: { status: false, message: 'Already following' } });

@@ -68,7 +68,6 @@ export async function getFollowStatusMap(userId: string, targetUserIds: string[]
             if (found) {
                 if (found.status === 'pending') followStatusMap[targetId] = 1;
                 else if (found.status === 'accepted') followStatusMap[targetId] = 2;
-                else if (found.status === 'rejected') followStatusMap[targetId] = 3;
                 else followStatusMap[targetId] = 0;
             } else {
                 // Check if they follow me (reverse)
@@ -102,7 +101,6 @@ export async function getSingleFollowStatus(userId: string, targetUserId: string
     if (follow) {
         if (follow.status === 'pending') return 1;
         if (follow.status === 'accepted') return 2;
-        if (follow.status === 'rejected') return 3;
         return 0;
     }
     // Check if they follow me (reverse)

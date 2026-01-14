@@ -135,6 +135,7 @@ export async function GET(req: Request) {
         followers,
         followings,
         postCount,
+        shortcode: raw.shortcode || '',
         userStoreId: userStoreId?._id?.toString() || null,
       };
     } else {
@@ -155,6 +156,7 @@ export async function GET(req: Request) {
         followings,
         postCount,
         followStatusCode,
+        shortcode: raw.shortcode || '',
         userStoreId: userStoreId?._id?.toString() || null,
       };
     }

@@ -13,14 +13,15 @@
  *           schema:
  *             type: object
  *             properties:
- *               requestId:
+ *               targetUserId:
  *                 type: string
  *                 example: "65a1234567890abcdef12345"
+ *                 description: "The userId of the follower who sent the request."
  *               action:
  *                 type: string
- *                 enum: ["1", "2", "3"]
+ *                 enum: ["1", "2"]
  *                 example: "1"
- *                 description: "1 = accept, 2 = reject, 3 = cancel"
+ *                 description: "1 = accept, 2 = reject
  *               userId:
  *                 type: string
  *                 example: "65a1234567890abcdef67890"
@@ -42,7 +43,7 @@
 // Accept/reject follow request API
 import { NextRequest, NextResponse } from 'next/server';
 // JWT import removed
-import connectDB  from '@/lib/db';
+import connectDB from '@/lib/db';
 import Follow from '@/models/Follow';
 import { followRequestActionSchema } from '../validator/schemas';
 
@@ -53,9 +54,10 @@ export async function PATCH(req: NextRequest) {
         const body = await req.json();
         const parse = followRequestActionSchema.safeParse(body);
         if (!parse.success) return NextResponse.json({ data: { status: false, message: 'Validation error', errors: parse.error.issues } }, { status: 400 });
-        const { requestId, action, userId } = parse.data;
-        const follow = await Follow.findById(requestId);
-        if (!follow || follow.status !== 'pending' || follow.isDeleted) {
+        const { targetUserId, action, userId } = parse.data;
+        // Find the follow request where targetUserId is the follower and userId is the following
+        const follow = await Follow.findOne({ follower: targetUserId, following: userId, status: 'pending', isDeleted: false });
+        if (!follow) {
             return NextResponse.json({ data: { status: false, message: 'Request not found' } }, { status: 404 });
         }
         // Only the user being followed can accept/reject
@@ -67,9 +69,9 @@ export async function PATCH(req: NextRequest) {
             await follow.save();
             return NextResponse.json({ data: { status: true, message: "Request accepted" } });
         } else if (action === "2") {
-            follow.status = "rejected";
+            follow.isDeleted = true;
             await follow.save();
-            return NextResponse.json({ data: { status: true, message: "Request rejected" } });
+            return NextResponse.json({ data: { status: true, message: "Request rejected and removed" } });
         } else {
             return NextResponse.json({ data: { status: false, message: "Invalid action" } }, { status: 400 });
         }

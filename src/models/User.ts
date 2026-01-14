@@ -52,6 +52,7 @@ const UserSchema = new Schema(
     expiresAt: { type: Date, default: null },
     userType: { type: String, enum: ['original', 'demo'], default: 'original' },
     deviceId: { type: String, default: '' },
+    shortcode: { type: String, default: '' }, // for profile shortcode URL
     referralCode: { type: String, default: '' },
     referredBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     // Track failed login attempts and lockout time
