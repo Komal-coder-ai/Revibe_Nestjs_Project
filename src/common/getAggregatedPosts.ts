@@ -85,6 +85,7 @@ export async function getAggregatedPosts({ match, blockedUserIds = [], following
       correctOption: 1,
       createdAt: 1,
       updatedAt: 1,
+      shortCode: '$shortcode',
     },
   });
 

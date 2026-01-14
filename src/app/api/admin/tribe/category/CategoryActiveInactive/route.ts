@@ -64,7 +64,7 @@ export async function PATCH(request: NextRequest) {
         if (!categoryId || typeof isActive !== 'boolean') {
             return NextResponse.json({ success: false, message: 'categoryId and isActive are required.' }, { status: 400 });
         }
-    
+
         console.log('Updating categoryId:', categoryId, 'to isActive:', isActive);
         const updated = await TribeCategory.findByIdAndUpdate(
             categoryId,

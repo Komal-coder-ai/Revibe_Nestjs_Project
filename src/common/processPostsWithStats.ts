@@ -1,5 +1,8 @@
+
 import { getFollowStatusMap } from '@/common/getFollowStatusMap';
 import Vote from '@/models/Vote';
+
+// Dynamically import SavedPost model for saved post checks
 
 // Helper to add computed fields to posts (used for both feed, list, detail, etc.)
 export async function processPostsWithStats(posts: any[], userId?: string) {
@@ -22,6 +25,17 @@ export async function processPostsWithStats(posts: any[], userId?: string) {
     (await import('@/models/Share')).default,
     // (await import('@/models/Vote')).default.find({ post: { $in: postIds }, user: userId })
   ]);
+
+  // Fetch saved posts for the user
+  let savedPostsMap: Record<string, boolean> = {};
+  if (userId) {
+    const SavedPost = (await import('@/models/SavedPost')).default;
+    const savedPosts = await SavedPost.find({ userId, postId: { $in: postIds }, isDeleted: false }).select('postId');
+    savedPostsMap = savedPosts.reduce((acc: Record<string, boolean>, sp: any) => {
+      if (sp && sp.postId) acc[sp.postId.toString()] = true;
+      return acc;
+    }, {});
+  }
   let userVotesArr: { post: any, optionIndex: number }[] = [];
   if (userId) {
     const votes = await Vote.find({ post: { $in: postIds }, user: userId }).select('post optionIndex').lean();
@@ -138,6 +152,8 @@ export async function processPostsWithStats(posts: any[], userId?: string) {
     const isLoggedInUser = basePost.user && basePost.user._id && basePost.user._id.toString() === (userId ? userId.toString() : '');
     // Add follow/friend status code
     const followStatusCode = basePost.user && basePost.user._id ? followStatusMap[basePost.user._id ? basePost.user._id.toString() : ''] ?? 0 : 0;
+    // Add isSavedPost flag
+    const isSavedPost = userId ? !!savedPostsMap[_id.toString()] : false;
     if ((post.type === 'poll' || post.type === 'quiz') && Array.isArray(post.options)) {
       const postVotes = votes.filter((v: any) => v.post && _id && v.post.toString() === _id.toString());
       const totalVotes = postVotes.length;
@@ -157,9 +173,9 @@ export async function processPostsWithStats(posts: any[], userId?: string) {
       const voteOption = userVotesMap[_id && _id.toString() ? _id.toString() : ''];
       const userVoted = voteOption !== undefined && voteOption !== null;
       const userVoteOption = userVoted ? voteOption : null;
-      return { ...basePost, totalVotes, options: pollResults, commentCount, likeCount, shareCount, userLike, isLoggedInUser, followStatusCode, userVoted, userVoteOption };
+      return { ...basePost, totalVotes, options: pollResults, commentCount, likeCount, shareCount, userLike, isLoggedInUser, followStatusCode, userVoted, userVoteOption, isSavedPost };
     }
     // For non-poll/quiz posts, always include userVoted and userVoteOption as false/null
-    return { ...basePost, commentCount, likeCount, shareCount, userLike, isLoggedInUser, followStatusCode, userVoted: false, userVoteOption: null };
+    return { ...basePost, commentCount, likeCount, shareCount, userLike, isLoggedInUser, followStatusCode, userVoted: false, userVoteOption: null, isSavedPost };
   });
 }

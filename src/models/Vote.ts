@@ -10,6 +10,7 @@ const VoteSchema = new Schema(
     isCorrect: { type: Boolean },
     // Type of vote: 'poll' or 'quiz'
     type: { type: String, enum: ['poll', 'quiz'] },
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

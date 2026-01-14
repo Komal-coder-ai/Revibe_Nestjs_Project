@@ -50,7 +50,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import Feed from '@/models/Feed';
+import Post from '@/models/Post';
 
 export async function PUT(request: NextRequest) {
   try {
@@ -72,17 +72,20 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
-
+    let isActive = true;
+    if (Number(status) == 0) {
+      isActive = false;
+    } else {
+      isActive = true;
+    }
     // Update feed status
-    const updatedFeed = await Feed.findByIdAndUpdate<
-      typeof Feed
-    >(
+    const updatedFeed = await Post.findByIdAndUpdate(
       feedId,
-      { status: Number(status) },
+      { isActive: isActive },
       { new: true }
-    ).lean();
+    );
 
-    if (!updatedFeed || !updatedFeed._id) {
+    if (!updatedFeed) {
       return NextResponse.json(
         { success: false, message: 'Feed not found or invalid response' },
         { status: 404 }
