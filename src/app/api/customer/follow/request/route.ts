@@ -19,9 +19,9 @@
  *                 description: "The userId of the follower who sent the request."
  *               action:
  *                 type: string
- *                 enum: ["1", "2"]
+ *                 enum: ["1", "2", "3"]
  *                 example: "1"
- *                 description: "1 = accept, 2 = reject
+ *                 description: "1 = accept, 2 = reject, 3 = cancel"
  *               userId:
  *                 type: string
  *                 example: "65a1234567890abcdef67890"
@@ -43,7 +43,7 @@
 // Accept/reject follow request API
 import { NextRequest, NextResponse } from 'next/server';
 // JWT import removed
-import connectDB from '@/lib/db';
+import connectDB  from '@/lib/db';
 import Follow from '@/models/Follow';
 import { followRequestActionSchema } from '../validator/schemas';
 
